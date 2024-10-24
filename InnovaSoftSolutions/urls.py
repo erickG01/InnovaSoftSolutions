@@ -16,13 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from django.urls import path
-from .views import descargar_balance_pdf
+from App_innovaSoft import views 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('inicio/',views.home,name="inicio"),
+    path('LibroMayor/',views.libroMayor,name="libroMayor"),
 ]
 
-urlpatterns = [
-    path('descargar-balance/', descargar_balance_pdf, name='descargar_balance'),
-]

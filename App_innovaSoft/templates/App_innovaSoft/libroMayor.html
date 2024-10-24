@@ -1,3 +1,7 @@
+{% extends 'App_innovaSoft/base.html' %}
+
+{%block content%}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,29 +14,7 @@
 </head>
 <body>
 
-    <!--Navegación-->
-    <nav class="navbar navbar-expand-lg bg-dark navbar-dark;">
-        <div class="container-fluid">
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link text-light" href="#">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="#">Catalogo de Cuentas</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="#">Libros contables</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="#">Transacciones</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="#">Costos</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="#">Ajustes contables</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="#">Estados Financieros</a></li>
-                </ul>
-            </div>
-            <div class="d-flex align-items-center">
-                <a class="nav-link text-light" href="#">
-                    <i class="bi bi-person-circle"></i> <!-- Ícono de Bootstrap -->
-                    InnovaSoft Solutions
-                </a>
-            </div>
-        </div>
-    </nav>
-    <br>
+    
 
     <div class="container mt-5">
         <h2 class="text-center">Libro Mayor</h2><br>
@@ -103,10 +85,11 @@
         </tbody>
     </table>
 
-    <a href="{% url 'descargar_balance' %}" class="d-grid gap-2 col-6 mx-auto">Descargar Balance en PDF</a>
+
     
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    {%endblock%}
 </body>
 </html>
