@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Libro Mayor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+</head>
+<body>
+
+    <!--Navegación-->
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark;">
+        <div class="container-fluid">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Catalogo de Cuentas</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Libros contables</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Transacciones</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Costos</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Ajustes contables</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Estados Financieros</a></li>
+                </ul>
+            </div>
+            <div class="d-flex align-items-center">
+                <a class="nav-link text-light" href="#">
+                    <i class="bi bi-person-circle"></i> <!-- Ícono de Bootstrap -->
+                    InnovaSoft Solutions
+                </a>
+            </div>
+        </div>
+    </nav>
+    <br>
+
+    <div class="container mt-5">
+        <h2 class="text-center">Libro Mayor</h2><br>
+
+        <!-- Filtros -->
+     <form class="mb-4" method="GET" action="/filtrar">
+        <div class="form-row">
+            <!-- Selección de cuentas -->
+            <div class="form-group col-md-4" >
+                <label for="cuentaSelect">Cuenta</label>
+                <select class="form-control" id="cuentaSelect" name="cuenta">
+                    <option value="" disabled selected>Seleccione una cuenta</option>
+                    <!-- Opciones del catálogo de cuentas -->
+                    {% for cuenta in catalogo_cuentas %}
+                        <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Fecha de inicio -->
+            <div class="form-group col-md-3">
+                <label for="fechaInicio">Fecha de Inicio</label>
+                <input type="date" class="form-control" id="fechaInicio" name="fecha_inicio">
+            </div>
+
+            <!-- Fecha de fin -->
+            <div class="form-group col-md-3">
+                <label for="fechaFin">Fecha de Fin</label>
+                <input type="date" class="form-control" id="fechaFin" name="fecha_fin">
+            </div>
+
+            <!-- Botón de filtrar -->
+            <div class="form-group col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+
+
+<!--Tabla de libro mayor-->
+    <table class="table table-striped table-bordered mt-4">
+        <thead class="thread-dark" style="background-color:rgb(51, 18, 83); color: white;">
+            <tr>
+                <th>Cuenta y Nombre</th>
+                <th colspan="2" class="text-center">Movimientos</th>                   
+                <th>Saldo</th>
+                <th>Balance</th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>Debe</th>
+                <th>Haber</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Aquí irían las filas generadas dinámicamente -->
+            <tr>
+                <td>Cuenta de Ejemplo</td>
+                <td>500.00</td>
+                <td>300.00</td>
+                <td>200.00</td>
+                <td>200.00</td>
+            </tr>
+            <!-- Fin de filas de ejemplo -->
+        </tbody>
+    </table>
+
+    <a href="{% url 'descargar_balance' %}" class="d-grid gap-2 col-6 mx-auto">Descargar Balance en PDF</a>
+    
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
