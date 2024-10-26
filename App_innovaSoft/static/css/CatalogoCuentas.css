@@ -1,0 +1,29 @@
+/* CatalogoCuentas.css */
+body {
+    font-family: Arial, sans-serif;
+    color: #2c3e50; /* Color del texto */
+}
+
+.form-select {
+    background-color: #d8d5d5d2; /* Color de fondo del combobox */
+    color: #000000; /* Color del texto en el combobox */
+}
+
+.btn-nueva {
+    background-color: #65df9cbd; 
+    color: rgb(0, 0, 0); /* Texto blanco */
+}
+
+.btn-modificar {
+    background-color: #5babe0b6; 
+    color: rgb(0, 0, 0); /* Texto blanco */
+}
+
+/* Efecto hover en los botones */
+.btn-nueva:hover {
+    background-color: #65df9c77; /* Tono más oscuro al pasar el mouse */
+}
+
+.btn-modificar:hover {
+    background-color: #5babe06b; 
+}

@@ -22,5 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('inicio/',views.home,name="inicio"),
     path('LibroMayor/',views.libroMayor,name="libroMayor"),
+    path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
 ]
 
