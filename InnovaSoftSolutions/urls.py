@@ -23,5 +23,6 @@ urlpatterns = [
     path('inicio/',views.home,name="inicio"),
     path('LibroMayor/',views.libroMayor,name="libroMayor"),
     path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
+    path('', views.home, name='home'),  # Ruta para la raíz
 ]
 
