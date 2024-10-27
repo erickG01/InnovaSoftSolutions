@@ -148,6 +148,7 @@ class CuentaDetalle(models.Model):
 class Transacion(models.Model):
       idTransacion=models.AutoField(primary_key=True)
       idSubCuenta=models.ForeignKey(SubCuenta,on_delete=models.CASCADE)
+      idCuentaDetalle=models.ForeignKey(CuentaDetalle,on_delete=models.CASCADE,null=True)
       debe=models.DecimalField(max_digits=10,decimal_places=2)
       haber=models.DecimalField(max_digits=10,decimal_places=2)
 
