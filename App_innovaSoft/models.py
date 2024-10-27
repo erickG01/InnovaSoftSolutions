@@ -119,8 +119,8 @@ class CuentaDeMayor(models.Model):
             ordering=['idDeMayor']
 
 #Cuenta
-class Cuenta(models.Model):
-     idCuenta=models.AutoField(primary_key=True)
+class SubCuenta(models.Model):
+     idSubCuenta=models.AutoField(primary_key=True)
      idDeMayor=models.ForeignKey(CuentaDeMayor, on_delete=models.CASCADE)
      codigoCuenta=models.CharField(max_length=256,unique=True)
      nombre=models.CharField(max_length=256,unique=True)
@@ -128,13 +128,26 @@ class Cuenta(models.Model):
      def __str__(self):
             return self.nombre
      class Meta:
-            db_table='cuenta'
-            ordering=['idCuenta']
+            db_table='subCuenta'
+            ordering=['idSubCuenta']
+
+#Cuenta de detalle
+class CuentaDetalle(models.Model):
+     idCuentaDetalle=models.AutoField(primary_key=True)
+     idCuenta=models.ForeignKey(SubCuenta, on_delete=models.CASCADE)
+     codigoCuenta=models.CharField(max_length=256,unique=True)
+     nombre=models.CharField(max_length=256,unique=True)
+
+     def __str__(self):
+            return self.nombre
+     class Meta:
+            db_table='cuentaDetalle'
+            ordering=['idCuentaDetalle']
 
 #Transacion
 class Transacion(models.Model):
       idTransacion=models.AutoField(primary_key=True)
-      idCuenta=models.ForeignKey(Cuenta,on_delete=models.CASCADE)
+      idSubCuenta=models.ForeignKey(SubCuenta,on_delete=models.CASCADE)
       debe=models.DecimalField(max_digits=10,decimal_places=2)
       haber=models.DecimalField(max_digits=10,decimal_places=2)
 
