@@ -1,0 +1,87 @@
+{% extends 'App_innovaSoft/base.html' %}
+
+{%block content%}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Hoja de Ajustes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Hoja de Ajustes</h2><br>
+
+    <!-- Filtros -->
+     <form class="mb-4" method="GET" action="/filtro">
+        <div class="form-row">
+            <!-- Selección de cuentas -->
+            <div class="form-group col-md-4" >
+                <label for="cuentaSelect">Cuenta</label>
+                <select class="form-control" id="cuentaSelect" name="cuenta">
+                    <option value="" disabled selected>Seleccione una cuenta</option>
+                    <!-- Opciones del catálogo de cuentas -->
+                    {% for cuenta in hoja_ajustes %}
+                        <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Botón de filtrar -->
+            <div class="form-group col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+<!--Tabla de hoja de ajustes-->
+    <table class="table table-striped table-bordered mt-4">
+        <thead class="thread-dark" style="background-color:#00aae4; color: white;">
+            <tr>
+                <th rowspan="2" class="text-center align-middle">Codigo</th>
+                <th rowspan="2" class="text-center align-middle">Nombre</th> 
+                <th rowspan="2" class="text-center align-middle">Debe</th> 
+                <th rowspan="2" class="text-center align-middle">Haber</th>                    
+                <th colspan="2" class="text-center">Ajustes</th>
+            </tr>
+            <tr>
+                <th>Debe</th>
+                <th>Haber</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Aquí irían las filas generadas dinámicamente -->
+            <tr>
+                <td>1111</td>
+                <td>Caja</td>
+                <td>$5421</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>1143</td>
+                <td>Bancos</td>
+                <td></td>
+                <td>$4587</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <!-- Fin de filas de ejemplo -->
+        </tbody>
+    </table>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    {%endblock%}
+</body>
+
+</html>

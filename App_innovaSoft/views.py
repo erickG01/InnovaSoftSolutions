@@ -10,3 +10,6 @@ def libroMayor(request):
 
 def CatalogoCuentas(request):
     return render(request,"App_innovaSoft/CatalogoCuentas.html")
+
+def hojAjustes(request):
+    return render(request,"App_innovaSoft/hojAjustes.html")
