@@ -134,7 +134,7 @@ class SubCuenta(models.Model):
 #Cuenta de detalle
 class CuentaDetalle(models.Model):
      idCuentaDetalle=models.AutoField(primary_key=True)
-     idCuenta=models.ForeignKey(SubCuenta, on_delete=models.CASCADE)
+     idCuenta=models.ForeignKey(SubCuenta, on_delete=models.CASCADE, related_name='detalles')
      codigoCuenta=models.CharField(max_length=256,unique=True)
      nombre=models.CharField(max_length=256,unique=True)
 

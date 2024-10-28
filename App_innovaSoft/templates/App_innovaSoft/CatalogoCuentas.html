@@ -24,43 +24,48 @@
 
 
         <!-- Filtros de busqueda-->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <label for="tipoCuenta" class="form-label">Tipo de Cuenta</label>
-                <select id="tipoCuenta" class="form-select">
-                    <option>TODAS</option>
-                    <option>ACTIVOS</option>
-                    <option>PASIVOS</option>
-                    <option>PATRIMONIO</option>
-                    <option>CUENTAS DE RESULTADO</option>
-                    <option>CUENTA DE CIERRE</option>
-                </select>
+        <form method="get" action="{% url 'CatalogoCuentas' %}">
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label for="tipoCuenta" class="form-label">Tipo de Cuenta</label>
+                    <select id="tipoCuenta" name="tipoCuenta" class="form-select">
+                        <option value="">TODAS</option>
+                        {% for tipo in tipos_cuenta %}
+                            <option value="{{ tipo.idGrupoCuenta }}" {% if tipo.idGrupoCuenta|stringformat:"s" == request.GET.tipoCuenta %}selected{% endif %}>
+                                {{ tipo.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="rubro" class="form-label">Rubro</label>
+                    <select id="rubro" name="rubro" class="form-select">
+                        <option value="">TODAS</option>
+                        {% for rubro in rubros %}
+                            <option value="{{ rubro.idRubro }}" {% if rubro.idRubro|stringformat:"s" == request.GET.rubro %}selected{% endif %}>
+                                {{ rubro.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="cuentaMayor" class="form-label">Cuenta Mayor</label>
+                    <select id="cuentaMayor" name="cuentaMayor" class="form-select">
+                        <option value="">TODAS</option>
+                        {% for cuenta in cuentas_mayor %}
+                            <option value="{{ cuenta.idDeMayor }}" {% if cuenta.idDeMayor|stringformat:"s" == request.GET.cuentaMayor %}selected{% endif %}>
+                                {{ cuenta.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label for="rubro" class="form-label">Rubro</label>
-                <select id="rubro" class="form-select">
-                    <option>TODAS</option>
-                    <option>ACTIVO CORRIENTE</option>
-                    <option>ACTIVO NO CORRIENTE</option>
-                    <option>PASIVO CORRIENTE</option>
-                    <option>PASIVO NO CORRIENTE</option>
-                    <option>CAPITAL</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="cuentaMayor" class="form-label">Cuenta Mayor</label>
-                <select id="cuentaMayor" class="form-select">
-                    <option>EFECTIVO Y EQUIVALENTES DE EFECTIVO</option>
-                    <option>CUENTAS Y DOCUMENTOS POR COBRAR</option>
-                    <option>CRÉDITO FISCAL - IVA</option>
-                    <option>PRÉSTAMOS A CORTO PLAZO</option>
-                    <option>TODAS</option>
-                </select>
-            </div>
-        </div>
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </form>
+        
 
        <!-- Búsqueda rápida y botones -->
-<div class="row mb-4">
+<div class="row mb-4 mt-4">
     <div class="col-md-6">
         <label for="busqueda" class="form-label">Cuentas:</label>
         <div class="input-group">
@@ -78,32 +83,45 @@
     </div>
 </div>
 
-        <!-- Tabla -->
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Saldo</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1101.01</td>
-                    <td>Caja</td>
-                    <td>Activo</td>
-                    <td>Acreedor</td>
-                </tr>
-                <tr>
-                    <td>1101.02</td>
-                    <td>Banco</td>
-                    <td>Activo</td>
-                    <td>Acreedor</td>
-                </tr>
-              
-            </tbody>
-        </table>
+<!-- Tabla -->
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>SubCuenta</th>
+            <th>Detalle Cuenta</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for subcuenta in subcuentas %}
+            <tr>
+                <td>{{ subcuenta.codigoCuenta }}</td>
+                <td>{{ subcuenta.nombre }}</td>
+                <td>{{ subcuenta.nombre }}</td>
+                <td>
+                    {% if subcuenta.detalles.all %}
+                        <ul>
+                            {% for detalle in subcuenta.detalles.all %}
+                                <li>{{ detalle.nombre }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        Sin detalles
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No se encontraron subcuentas.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
+        
 
     </div>
 

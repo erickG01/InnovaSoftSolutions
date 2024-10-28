@@ -22,7 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('inicio/',views.home,name="inicio"),
     path('LibroMayor/',views.libroMayor,name="libroMayor"),
-    path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
+    path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
     path('', views.home, name='home'),  # Ruta para la raíz
 ]
 
