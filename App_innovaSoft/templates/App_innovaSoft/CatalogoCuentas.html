@@ -83,7 +83,7 @@
         <tr>
             <th>Código</th>
             <th>Nombre</th>
-            <th>SubCuenta</th>
+            <th>Tipo de Cuenta</th>
             <th>Saldo</th>
         </tr>
     </thead>
@@ -93,7 +93,7 @@
         <tr>
             <td>{{ subcuenta.codigoCuenta }}</td>
             <td>{{ subcuenta.nombre }}</td>
-            <td>{{ subcuenta.nombre }}</td>
+            <td>{{ subcuenta.idDeMayor.idRubro.idGrupoCuenta.nombre}}</td>
             <td>
                 {% if subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 1 or subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 4 %}
                     Deudor
@@ -110,7 +110,7 @@
             <tr class="detalle-cuenta">
                 <td class="ps-5">{{ detalle.codigoCuenta }}</td>
                 <td>{{ detalle.nombre }}</td>
-                <td>{{ detalle.idCuenta.nombre }}</td>
+                <td>{{ detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.nombre}}</td>
                 <td>
                     {% if detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 1 or detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 4 %}
                         Deudor
