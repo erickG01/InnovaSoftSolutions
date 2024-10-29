@@ -27,3 +27,39 @@ body {
 .btn-modificar:hover {
     background-color: #5babe06b; 
 }
+/* Estilo para las cuentas secundarias (detalles) */
+
+.detalle-cuenta td {
+    background-color: #f1f1f1; /* Fondo claro */
+    color: #666;              /* Color de texto más suave */
+    padding-left: 2rem;       /* Mayor indentación para resaltar la jerarquía */
+    font-size: 0.95rem;       /* Tamaño de fuente más pequeño */
+}
+/* Estilos generales para la tabla */
+.table {
+    margin-top: 20px;
+    border-collapse: collapse; /* Mejora el aspecto de la tabla */
+}
+
+/* Estilo para las filas de subcuentas */
+.table tbody tr {
+    transition: background-color 0.3s ease; /* Efecto de transición al pasar el mouse */
+}
+
+.table tbody tr:hover {
+    background-color: #f1f1f1; /* Color de fondo al pasar el mouse */
+}
+
+
+
+
+/* Espaciado adicional en las celdas */
+.table th, .table td {
+    padding: 12px 15px; /* Espaciado interno en celdas */
+}
+
+/* Estilo de las columnas */
+.table th {
+    text-align: left; /* Alinear texto a la izquierda */
+}
+
