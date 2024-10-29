@@ -21,7 +21,13 @@ from App_innovaSoft import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('inicio/',views.home,name="inicio"),
+
     path('LibroMayor/',views.libroMayor,name="libroMayor"),
+
     path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
+
+    path('Costos/',views.Costos,name="costos"),
+
+     path('', views.home), 
 ]
 
