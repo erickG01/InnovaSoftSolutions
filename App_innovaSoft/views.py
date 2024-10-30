@@ -55,7 +55,7 @@ def agregar_transaccion(request):
         haber = request.POST.get('haber')
         
         # Crea una nueva transacción
-        nueva_transaccion = Transaccion(
+        nueva_transaccion = transaccion(
             cuenta_id=cuenta_id,
             fecha=fecha,
             debe=debe,
@@ -64,9 +64,9 @@ def agregar_transaccion(request):
         nueva_transaccion.save()
         
         # Redirigir a la página de transacciones después de agregar
-        return redirect('transaccion')  # Cambia esto según tu configuración
+        return redirect('transaccion') 
 
-    return render(request, 'App_innovaSoft/transacciones.html', {'catalogo_cuentas': catalogo_cuentas})
+    return render(request, 'App_innovaSoft/transacciones.html', {'catalogo_cuentas': CatalogoCuentas})
 
 
 
