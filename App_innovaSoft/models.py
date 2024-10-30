@@ -1,8 +1,8 @@
 from django.db import models
 
 from django.contrib.auth.models import User
-#Departamento
 
+#Departamento
 class Departamento(models.Model):
         idDepartamento=models.AutoField(primary_key=True),
         nombre=models.CharField(max_length=256,null=False,unique=True)
@@ -12,7 +12,6 @@ class Departamento(models.Model):
         class Meta:
             db_table='departamento'
            
-
 #Prestaciones
 class Prestaciones(models.Model):
         idPrestaciones=models.AutoField(primary_key=True,null=False)
@@ -20,7 +19,6 @@ class Prestaciones(models.Model):
         tasaAFP=models.DecimalField(max_digits=4,decimal_places=4,null=False)
         tasaIncaf=models.DecimalField(max_digits=4,decimal_places=3,null=False)
         recargoPorVacaciones=models.DecimalField(max_digits=4,decimal_places=3,null=False)
-
         
         def __str__(self):
             return self.nombre
@@ -53,7 +51,6 @@ class CostoReal(models.Model):
     idEmpleado=models.ForeignKey(Empleado, on_delete=models.CASCADE)
     costoReal=models.DecimalField(max_digits=10, decimal_places=2)
 
-    
     def __str__(self):
             return self.nombre
     class Meta:
@@ -69,7 +66,6 @@ class OrdenTrabajo(models.Model):
       fechaInico=models.DateField()
       fechaFin=models.DateField()
       personal=models.TextField()
-
       
       def __str__(self):
             return self.nombre
@@ -83,7 +79,6 @@ class GrupoCuenta(models.Model):
       codigoGrupoCuenta=models.CharField(max_length=256,unique=True)
       nombre=models.CharField(max_length=256,unique=True)
 
-
       def __str__(self):
             return self.nombre
       class Meta:
@@ -96,7 +91,6 @@ class RubroDeAgrupacion(models.Model):
       idGrupoCuenta=models.ForeignKey(GrupoCuenta,on_delete=models.CASCADE)
       codigoCuenta=models.CharField(max_length=256,unique=True)
       nombre=models.CharField(max_length=256,unique=True)
-
       
       def __str__(self):
             return self.nombre
@@ -110,8 +104,7 @@ class CuentaDeMayor(models.Model):
       idRubro=models.ForeignKey(RubroDeAgrupacion,on_delete=models.CASCADE)
       codigoCuenta=models.CharField(max_length=256,unique=True)
       nombre=models.CharField(max_length=256,unique=True)
-
-      
+     
       def __str__(self):
             return self.nombre
       class Meta:
@@ -144,7 +137,7 @@ class CuentaDetalle(models.Model):
             db_table='cuentaDetalle'
             ordering=['idCuentaDetalle']
 
-#Transacion
+#Transacción
 class Transacion(models.Model):
       idTransacion=models.AutoField(primary_key=True)
       idSubCuenta=models.ForeignKey(SubCuenta,on_delete=models.CASCADE)
@@ -164,7 +157,6 @@ class LibroMayor(models.Model):
       idTransacion=models.ForeignKey(Transacion,on_delete=models.CASCADE)
       fechaInicioDePeriodo=models.DateField()
       fechaFinDePeriodo=models.DateField()
-
       
       def __str__(self):
             return self.nombre
@@ -212,7 +204,7 @@ class BalanceDeComprobacion(models.Model):
             db_table='balanceDeComprobacion'
             ordering=['idBalanceDeComprobacion']
 
- #Balance General
+#Balance General
 class BalanceGeneral(models.Model):
       idBalanceGeneral=models.AutoField(primary_key=True)
       idInformacion=models.ForeignKey(Informacion,on_delete=models.CASCADE)
@@ -244,7 +236,7 @@ class EstadoDeCapital(models.Model):
             db_table='estadoDeCapital'
             ordering=['idEstadoCapital']    
 
- #Estado de Resultados
+#Estado de Resultados
 class EstadoDeResultados(models.Model):
       idEstadoDeResultados=models.AutoField(primary_key=True)
       idInformacion=models.ForeignKey(Informacion,on_delete=models.CASCADE)
@@ -256,7 +248,8 @@ class EstadoDeResultados(models.Model):
       UtilidadDeOperacion=models.DecimalField(max_digits=10,decimal_places=2)
       UtilidadAntesDeOtrosIngresos=models.DecimalField(max_digits=10,decimal_places=2) 
       UtilidadAntesDeImpuesto=models.DecimalField(max_digits=10,decimal_places=2)
-      UtilidadNeta=models.DecimalField(max_digits=10,decimal_places=2)  
+      UtilidadNeta=models.DecimalField(max_digits=10,decimal_places=2)
+        
       def __str__(self):
             return self.nombre
       class Meta:
