@@ -27,11 +27,7 @@ urlpatterns = [
     path('transaccion/',views.transaccion,name="transaccion"),
     path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('logout/', views.logout,name="logout"),
-    path('libro_mayor/', views.libro_mayor_view, name='libro_mayor'),
-    path('', views.home, name='inicio'),  # Página de inicio
-    path('catalogo-cuentas/', views.CatalogoCuentas, name='catalogo_cuentas'), #catalogo de cuentas
-    path('libro-mayor/', views.libroMayor, name='libro_mayor'),  # Libro mayor
-    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
+    
 ]
 
  

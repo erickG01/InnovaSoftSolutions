@@ -17,12 +17,8 @@ def libro_mayor_view(request):
     catalogo_cuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
     return render(request, 'App_innovaSoft/libroMayor.html', {'catalogo_cuentas': catalogo_cuentas})
 
-
-
-
 def CatalogoCuentas(request):
     return render(request,"App_innovaSoft/CatalogoCuentas.html")
-
 
 def transaccion(request):
     return render(request,"App_innovaSoft/transaccion.html")
@@ -68,7 +64,7 @@ def agregar_transaccion(request):
         nueva_transaccion.save()
         
         # Redirigir a la página de transacciones después de agregar
-        return redirect('nombre_de_la_vista_transacciones')  # Cambia esto según tu configuración
+        return redirect('transaccion')  # Cambia esto según tu configuración
 
     return render(request, 'App_innovaSoft/transacciones.html', {'catalogo_cuentas': catalogo_cuentas})
 
