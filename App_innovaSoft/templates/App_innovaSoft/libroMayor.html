@@ -27,11 +27,11 @@
                 <label for="cuentaSelect">Cuenta</label>
                 <select class="form-control" id="cuentaSelect" name="cuenta">
                     <option value="" disabled selected>Seleccione una cuenta</option>
-                    <!-- Opciones del catálogo de cuentas -->
                     {% for cuenta in catalogo_cuentas %}
                         <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
                     {% endfor %}
                 </select>
+                
             </div>
 
             <!-- Fecha de inicio -->
