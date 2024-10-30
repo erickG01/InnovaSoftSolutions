@@ -75,7 +75,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',  # Motor de base de datos
         'NAME':'InnovaSoft',                        # Nombre de la base de datos
-        'USER':'postgres',                        # Usuario de la base de datos
+        'USER':'postgres',                          # Usuario de la base de datos
         'PASSWORD':'inventario123',                 # Contraseña de la base de datos
         'HOST':'localhost',                         # Host de la base de datos
         'PORT':'5432',                              # Puerto de conexión

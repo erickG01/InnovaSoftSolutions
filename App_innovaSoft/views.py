@@ -12,6 +12,3 @@ def CatalogoCuentas(request):
 
 def hojAjustes(request):
     return render(request,"App_innovaSoft/hojAjustes.html")          # Renderiza la plantilla de la Hoja de Ajustes
-
-def estadosFinancieros(request):
-    return render(request, "App_innovaSoft/estadosFinancieros.html") # Renderiza la plantilla de Estados Financieros

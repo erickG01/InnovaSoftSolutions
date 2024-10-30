@@ -24,5 +24,4 @@ urlpatterns = [
     path('LibroMayor/',views.libroMayor,name="libroMayor"),                            # Ruta para la vista de Libro Mayor
     path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),             # Ruta para el catálogo de cuentas
     path('HojAjustes/',views.hojAjustes,name="hojAjustes"),                            # Ruta para la hoja de ajustes
-    path('EstadosFinancieros/', views.estadosFinancieros, name="estadosFinancieros"),  # Ruta para estados financieros
 ]

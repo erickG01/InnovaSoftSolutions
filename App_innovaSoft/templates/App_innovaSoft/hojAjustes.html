@@ -17,47 +17,33 @@
 </head>
 
 <body>
-    <div class="container mt-5">
-        <h2 class="text-center">Hoja de Ajustes</h2><br>
+<div class="container mt-5">
+    <h2 class="text-center">Hoja de Ajustes</h2><br>
 
-    <!-- Filtros -->
-     <form class="mb-4" method="GET" action="/filtro">
-        <div class="form-row">
-            <!-- Selección de cuentas -->
-            <div class="form-group col-md-4" >
-                <label for="cuentaSelect">Cuenta</label>
-                <select class="form-control" id="cuentaSelect" name="cuenta">
-                    <option value="" disabled selected>Seleccione una cuenta</option>
-                    <!-- Opciones del catálogo de cuentas -->
-                    {% for cuenta in hoja_ajustes %}
-                        <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+    <!-- Sección de descargas -->
+    <div class="mb-4">
+        <h5 class="d-inline">Descargar:</h5>
+        <a class="btn btn-secondary m-1">Ajuste de Comprobación</a>
+        <a class="btn btn-secondary m-1">Estado de Resultado</a>
+        <a class="btn btn-secondary m-1">Estado de Capital</a>
+        <a class="btn btn-secondary m-1">Balance General</a>
+    </div>
 
-            <!-- Botón de filtrar -->
-            <div class="form-group col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Filtrar</button>
-            </div>
-
-            <!-- Botón de nuevo ajuste -->
-            <div class="form-group col-md-2 d-flex align-items-end ml-auto">
-                <button type="submit" class="btn btn-primary">Nuevo ajuste</button>
-            </div>
-        </div>
-    </form>
-
-<!--Tabla de hoja de ajustes-->
+    <!--Tabla de hoja de ajustes-->
     <table class="table table-striped table-bordered mt-4">
-        <thead class="thread-dark" style="background-color:#00aae4; color: white;">
+        <thead class="thead-dark">
             <tr>
                 <th rowspan="2" class="text-center align-middle">Codigo</th>
                 <th rowspan="2" class="text-center align-middle">Nombre</th> 
                 <th rowspan="2" class="text-center align-middle">Debe</th> 
                 <th rowspan="2" class="text-center align-middle">Haber</th>                    
                 <th colspan="2" class="text-center">Ajustes</th>
+                <th colspan="2" class="text-center align-middle">Balance de Comprobación</th>
+                <th rowspan="2" class="text-center align-middle">Acciones</th>
             </tr>
             <tr>
+                <th>Debe</th>
+                <th>Haber</th>
                 <th>Debe</th>
                 <th>Haber</th>
             </tr>
@@ -71,6 +57,13 @@
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalAjustes1111">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </td>
             </tr>
             <tr>
                 <td>1143</td>
@@ -79,11 +72,18 @@
                 <td>$4587</td>
                 <td></td>
                 <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalAjustes1111">
+                        <i class="bi bi-pencil"></i> 
+                    </button>
+                </td>
             </tr>
             <!-- Fin de filas de ejemplo -->
         </tbody>
     </table>
-
+</div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     {%endblock%}
