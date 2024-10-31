@@ -32,5 +32,6 @@ urlpatterns = [
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
     path('logout/', views.logout,name="logout"),
+    path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion")
 ]
 
