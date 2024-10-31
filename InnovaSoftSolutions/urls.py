@@ -27,6 +27,7 @@ urlpatterns = [
     path('transaccion/',views.transaccion,name="transaccion"),
     path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('logout/', views.logout,name="logout"),
+    path('guardar_transacciones/', views.guardar_transacciones, name='guardar_transacciones'),
     
 ]
 

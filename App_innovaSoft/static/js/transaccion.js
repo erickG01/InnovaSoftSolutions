@@ -1,62 +1,93 @@
-// transacciones.js
+// transaccion.js
+$(document).ready(function() {
+    let rowCount = 1; // Contador de filas
 
-// Abre el modal de edición/agregar transacción
-function openEditModal(id, fecha, cuentaId, debe, haber) {
-    document.getElementById('transaccionId').value = id || '';
-    document.getElementById('fecha').value = fecha || '';
-    document.getElementById('cuentaSelectModal').value = cuentaId || '';
-    document.getElementById('debe').value = debe || '';
-    document.getElementById('haber').value = haber || '';
-    $('#agregarTransaccionModal').modal('show');
-}
+    // Función para calcular totales
+    function calcularTotales() {
+        let totalDebe = 0;
+        let totalHaber = 0;
 
-// Función para guardar o editar la transacción
-function guardarTransaccion() {
-    const id = document.getElementById('transaccionId').value;
-    const cuenta = document.getElementById('cuentaSelectModal').value;
-    const fecha = document.getElementById('fecha').value;
-    const debe = document.getElementById('debe').value;
-    const haber = document.getElementById('haber').value;
+        // Sumar los valores de cada columna "Debe" y "Haber"
+        $('.debe').each(function() {
+            let debe = parseFloat($(this).val()) || 0;
+            totalDebe += debe;
+        });
+        $('.haber').each(function() {
+            let haber = parseFloat($(this).val()) || 0;
+            totalHaber += haber;
+        });
 
-    const url = id ? `/editar_transaccion/${id}/` : `/agregar_transaccion/`;
-    const method = id ? 'PUT' : 'POST';
-
-    fetch(url, {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({ cuenta, fecha, debe, haber })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error al guardar la transacción');
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-// Función para eliminar una transacción
-function eliminarTransaccion(id) {
-    if (confirm('¿Estás seguro de que deseas eliminar esta transacción?')) {
-        fetch(`/eliminar_transaccion/${id}/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error al eliminar la transacción');
-            }
-        })
-        .catch(error => console.error('Error:', error));
+        // Mostrar los totales en la fila de total
+        $('#totalDebe').text(totalDebe.toFixed(2));
+        $('#totalHaber').text(totalHaber.toFixed(2));
     }
-}
+
+     // Función para guardar las transacciones al hacer clic en el botón "Guardar"
+     $('#guardarTransacciones').click(function() {
+        let transacciones = [];
+
+        $('#dynamicTable tbody tr').each(function() {
+            let numeroCuenta = $(this).find('.numero-cuenta').val();
+            let nombreCuenta = $(this).find('.numero-cuenta').val(); // Ajusta esto si tienes otro campo para el nombre
+            let debe = $(this).find('.debe').val();
+            let haber = $(this).find('.haber').val();
+
+            // Añade cada transacción a la lista
+            transacciones.push({
+                'numeroCuenta': numeroCuenta,
+                'nombreCuenta': nombreCuenta,
+                'debe': debe,
+                'haber': haber
+            });
+        });
+
+        // Enviar los datos al servidor
+        $.ajax({
+            url: '/guardar_transacciones/',
+            method: 'POST',
+            data: {
+                'transacciones': JSON.stringify(transacciones),
+                'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                alert("Transacciones guardadas exitosamente en el Libro Mayor.");
+            },
+            error: function() {
+                alert("Hubo un error al guardar las transacciones.");
+            }
+        });
+    });
+});
+
+
+     // Función para agregar fila
+    $('#addRow').click(function() {
+        rowCount++;
+        let newRow = `<tr>
+                        <td><select class="form-control" id="cuentaSelect" name="cuenta">
+                    <option value="" disabled selected>Seleccione una cuenta</option>
+                    {% for cuenta in CatalogoCuentas %}
+                        <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
+                    {% endfor %}
+                </select></td>
+                        <td><input type="text" class="form-control numero-cuenta" placeholder="Nombre de Cuenta" readonly></td>
+                        <td><input type="number" class="form-control debe" placeholder="Debe"></td>            <td><input type="number" class="form-control haber" placeholder="Haber"></td>
+                        <td><button class="btn btn-danger btn-sm removeRow">Eliminar</button></td>
+                      </tr>`;
+        $('#dynamicTable tbody').append(newRow);
+        calcularTotales();
+    });
+
+    // Función para eliminar fila
+    $(document).on('click', '.removeRow', function() {
+        $(this).closest('tr').remove();
+        calcularTotales();
+    });
+
+    // Calcular totales cuando se cambia el valor de "Debe" o "Haber"
+    $(document).on('input', '.debe, .haber', function() {
+        calcularTotales();
+    });
+
+    // Calcular totales inicialmente
+    calcularTotales();

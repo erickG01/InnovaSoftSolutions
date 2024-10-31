@@ -2,8 +2,11 @@ from django.shortcuts import render
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from .models import Transacion, CuentaDetalle, SubCuenta
+from .models import Transacion, CuentaDetalle, SubCuenta, LibroMayor
 from django.contrib import messages
+import json
+from django.http import JsonResponse
+ 
 
 
 # Create your views here.
@@ -13,9 +16,9 @@ def home(request):
 def libroMayor(request):
     return render(request,"App_innovaSoft/libroMayor.html")
 
-def libro_mayor_view(request):
-    catalogo_cuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
-    return render(request, 'App_innovaSoft/libroMayor.html', {'catalogo_cuentas': catalogo_cuentas})
+def libroMayor(request):
+    CatalogoCuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
+    return render(request, 'App_innovaSoft/libroMayor.html', {'CatalogoCuentas': CatalogoCuentas})
 
 def CatalogoCuentas(request):
     return render(request,"App_innovaSoft/CatalogoCuentas.html")
@@ -68,5 +71,31 @@ def agregar_transaccion(request):
 
     return render(request, 'App_innovaSoft/transacciones.html', {'catalogo_cuentas': CatalogoCuentas})
 
+
+
+def guardar_transacciones(request):
+    if request.method == 'POST':
+        transacciones_data = json.loads(request.POST.get('transacciones', '[]'))
+        
+        # Procesar cada transacción y guardarla en el libro mayor
+        for transaccion in transacciones_data:
+            numero_cuenta = transaccion.get('numeroCuenta')
+            nombre_cuenta = transaccion.get('nombreCuenta')
+            debe = float(transaccion.get('debe', 0))
+            haber = float(transaccion.get('haber', 0))
+
+            # Crear la entrada en el Libro Mayor
+            nueva_entrada = LibroMayor(
+                numero_cuenta=numero_cuenta,
+                nombre_cuenta=nombre_cuenta,
+                debe=debe,
+                haber=haber,
+                # otros campos necesarios
+            )
+            nueva_entrada.save()
+
+        return JsonResponse({'status': 'success'})
+    else:
+        return JsonResponse({'status': 'fail'}, status=400)
 
 
