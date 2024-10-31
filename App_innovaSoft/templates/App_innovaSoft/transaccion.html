@@ -1,0 +1,104 @@
+{% extends 'App_innovaSoft/base.html' %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Transacción</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h2 class="text-center">Transacción</h2><br>
+
+        <!-- Filtros -->
+        <form class="mb-3">
+            <div class="form-row">
+                <!-- Selección de cuentas -->
+                <div class="form-group col-md-3">
+                    <label for="cuentaSelect">Cuenta</label>
+                    <select class="form-control" id="cuentaSelect" name="cuenta">
+                        <option value="" disabled selected>Seleccione una cuenta</option>
+                        {% for cuenta in catalogo_cuentas %}
+                            <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+
+      <!--Tabla de transacciones -->
+        <!-- Tabla -->
+        <table class="table table-bordered" id="dynamicTable">
+          <thead class="table table-dark">
+            <tr>
+              <th>N°</th>
+              <th>Fecha</th>
+              <th>Cuenta</th>
+              <th>Debe</th>
+              <th>Haber</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Fila de ejemplo -->
+            <tr>
+              <td>1</td>
+              <td><input type="date" class="form-control"></td>
+              <td><input type="text" class="form-control" placeholder="Cuenta"></td>
+              <td><input type="number" class="form-control" placeholder="Debe"></td>
+              <td><input type="number" class="form-control" placeholder="Haber"></td>
+              <td>
+                <button class="btn btn-success btn-sm addRow">Agregar</button>
+                <button class="btn btn-danger btn-sm removeRow">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+         <!-- Botón para agregar fila -->
+       <div class="form-group col-md-4 ml-auto-left">
+        <button id="addRow" class="btn btn-primary">Agregar Fila</button>
+        </div>
+      </div>
+
+      
+      
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script>
+        $(document).ready(function() {
+          let rowCount = 1; // Contador de filas
+      
+          // Función para agregar fila
+          $('#addRow').click(function() {
+            rowCount++;
+            let newRow = `<tr>
+                            <td>${rowCount}</td>
+                            <td><input type="date" class="form-control"></td>
+                            <td><input type="text" class="form-control" placeholder="Cuenta"></td>
+                            <td><input type="number" class="form-control" placeholder="Debe"></td>
+                            <td><input type="number" class="form-control" placeholder="Haber"></td>
+                            <td>
+                              <button class="btn btn-success btn-sm addRow">Agregar</button>
+                              <button class="btn btn-danger btn-sm removeRow">Eliminar</button>
+                            </td>
+                          </tr>`;
+            $('#dynamicTable tbody').append(newRow);
+          });
+      
+          // Función para eliminar fila
+          $(document).on('click', '.removeRow', function() {
+            $(this).closest('tr').remove();
+            rowCount--;
+          });
+        });
+      </script>
+
+    {% endblock %}
+</body>
+</html>

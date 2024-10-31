@@ -23,11 +23,13 @@ urlpatterns = [
     path('inicio/',views.home,name="inicio"),
 
     path('LibroMayor/',views.libroMayor,name="libroMayor"),
-
-    path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
-
+    path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
+    path('', views.home, name='home'),  # Ruta para la raíz
     path('Costos/',views.Costos,name="costos"),
-
-     path('', views.home), 
+    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
+    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
+    #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
+    path('login/', views.login,name="login"),
+    path('logout/', views.logout,name="logout"),
 ]
 
