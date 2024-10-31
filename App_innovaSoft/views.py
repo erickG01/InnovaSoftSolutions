@@ -24,8 +24,8 @@ def CatalogoCuentas(request):
     return render(request,"App_innovaSoft/CatalogoCuentas.html")
 
 def transaccion(request):
-    return render(request,"App_innovaSoft/transaccion.html")
-
+   CatalogoCuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
+   return render(request, 'App_innovaSoft/transaccion.html', {'CatalogoCuentas': CatalogoCuentas})
 
 from django.contrib.auth import authenticate, login as auth_login
 
