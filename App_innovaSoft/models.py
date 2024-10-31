@@ -134,7 +134,7 @@ class SubCuenta(models.Model):
 #Cuenta de detalle
 class CuentaDetalle(models.Model):
      idCuentaDetalle=models.AutoField(primary_key=True)
-     idCuenta=models.ForeignKey(SubCuenta, on_delete=models.CASCADE)
+     idCuenta=models.ForeignKey(SubCuenta, on_delete=models.CASCADE, related_name='detalles')
      codigoCuenta=models.CharField(max_length=256,unique=True)
      nombre=models.CharField(max_length=256,unique=True)
 
@@ -147,7 +147,7 @@ class CuentaDetalle(models.Model):
 #Transacion
 class Transacion(models.Model):
       idTransacion=models.AutoField(primary_key=True)
-      idSubCuenta=models.ForeignKey(SubCuenta,on_delete=models.CASCADE)
+      idSubCuenta=models.ForeignKey(SubCuenta,on_delete=models.CASCADE,null=True)
       idCuentaDetalle=models.ForeignKey(CuentaDetalle,on_delete=models.CASCADE,null=True)
       debe=models.DecimalField(max_digits=10,decimal_places=2)
       haber=models.DecimalField(max_digits=10,decimal_places=2)
@@ -158,10 +158,22 @@ class Transacion(models.Model):
             db_table='transacion'
             ordering=['idTransacion']
 
+#Registro en cuenta T
+class RegistroCuentaT(models.Model):
+        idCuentaT=models.AutoField(primary_key=True)
+        idTransacion=models.ForeignKey(Transacion,on_delete=models.CASCADE)
+        debe=models.DecimalField(max_digits=10,decimal_places=2)
+        haber=models.DecimalField(max_digits=10,decimal_places=2)
+        saldo=models.DecimalField(max_digits=10,decimal_places=2)
+        def __str__(self):
+            return self.nombre
+        class Meta:
+            db_table='registroCuentaT'
+            ordering=['idCuentaT']
+
 #Libro Mayor
-class LibroMayor(models.Model):
-      idLibroMayor=models.AutoField(primary_key=True)
-      idTransacion=models.ForeignKey(Transacion,on_delete=models.CASCADE)
+class PeriodoContable(models.Model):
+      idPeriodo=models.AutoField(primary_key=True)
       fechaInicioDePeriodo=models.DateField()
       fechaFinDePeriodo=models.DateField()
 
@@ -169,21 +181,10 @@ class LibroMayor(models.Model):
       def __str__(self):
             return self.nombre
       class Meta:
-            db_table='libroMayor'
-            ordering=['idLibroMayor']
+            db_table='periodoContable'
+            ordering=['idPeriodo']
 
-#Registro en cuenta T
-class RegistroCuentaT(models.Model):
-        idCuentaT=models.AutoField(primary_key=True)
-        idTransacion=models.ForeignKey(Transacion,on_delete=models.CASCADE)
-        debe=models.DecimalField(max_digits=10,decimal_places=2)
-        haber=models.DecimalField(max_digits=10,decimal_places=2)
 
-        def __str__(self):
-            return self.nombre
-        class Meta:
-            db_table='registroCuentaT'
-            ordering=['idCuentaT']
 
 #Informacion General
 class Informacion(models.Model):
