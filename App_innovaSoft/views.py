@@ -73,6 +73,9 @@ def tipos_cuentas(request):
 def hojAjustes(request):
     return render(request,"App_innovaSoft/hojAjustes.html")
 
+def estadoCapital(request):
+    return render(request,"App_innovaSoft/estadoCapital.html")
+
 def login(request):
     if request.method == 'POST':
         username = request.POST['username']

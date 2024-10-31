@@ -79,7 +79,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME':'InnovaSoft',
         'USER':'postgres',
-        'PASSWORD':'inventario123',
+        'PASSWORD':'rn22001',
         'HOST':'localhost',
         'PORT':'5432',
     }

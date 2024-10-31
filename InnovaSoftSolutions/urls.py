@@ -27,6 +27,7 @@ urlpatterns = [
     path('', views.home, name='home'),  # Ruta para la raíz
     path('Costos/',views.Costos,name="costos"),
     path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
+    path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
     path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
