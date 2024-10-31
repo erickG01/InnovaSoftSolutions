@@ -172,10 +172,8 @@ class RegistroCuentaT(models.Model):
             ordering=['idCuentaT']
 
 #Libro Mayor
-class LibroMayor(models.Model):
-      idLibroMayor=models.AutoField(primary_key=True)
-      idTransacion=models.ForeignKey(Transacion,on_delete=models.CASCADE)
-      idRegistroCuentaT=models.ForeignKey(RegistroCuentaT,on_delete=models.CASCADE)
+class PeriodoContable(models.Model):
+      idPeriodo=models.AutoField(primary_key=True)
       fechaInicioDePeriodo=models.DateField()
       fechaFinDePeriodo=models.DateField()
 
@@ -183,8 +181,8 @@ class LibroMayor(models.Model):
       def __str__(self):
             return self.nombre
       class Meta:
-            db_table='libroMayor'
-            ordering=['idLibroMayor']
+            db_table='periodoContable'
+            ordering=['idPeriodo']
 
 
 

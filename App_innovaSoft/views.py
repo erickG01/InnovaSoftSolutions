@@ -6,6 +6,10 @@ from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login as auth_login
+from django.shortcuts import render
+from django.db.models import Sum, F
+from django.shortcuts import render
+
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
@@ -89,3 +93,31 @@ def login(request):
 
 def logout(request):
     return render (request,"App_innovaSoft/login.html")
+
+
+
+
+def libro_mayor_view(request):
+    # Agrupar transacciones por cuenta
+    transacciones_por_cuenta = (
+        Transacion.objects.values('idSubCuenta', 'idSubCuenta__nombre', 'idSubCuenta__codigoCuenta',
+                                  'idCuentaDetalle', 'idCuentaDetalle__nombre', 'idCuentaDetalle__codigoCuenta')
+        .annotate(
+            total_debe=Sum('debe'),
+            total_haber=Sum('haber'),
+            saldo=Sum(F('debe') - F('haber'))
+        )
+        .order_by('idSubCuenta', 'idCuentaDetalle')
+    )
+
+    # Agregar lista de transacciones para cada cuenta en la lista `transacciones_por_cuenta`
+    for cuenta in transacciones_por_cuenta:
+        cuenta_id = cuenta['idSubCuenta'] or cuenta['idCuentaDetalle']
+        cuenta['transacciones'] = Transacion.objects.filter(
+            idSubCuenta=cuenta['idSubCuenta'] if cuenta['idSubCuenta'] else None,
+            idCuentaDetalle=cuenta['idCuentaDetalle'] if cuenta['idCuentaDetalle'] else None
+        ).select_related('idSubCuenta', 'idCuentaDetalle').order_by('idTransacion')
+
+    return render(request, 'App_innovaSoft/libroMayor.html', {
+        'transacciones_por_cuenta': transacciones_por_cuenta,
+    })
