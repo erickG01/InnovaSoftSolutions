@@ -1,7 +1,8 @@
-
-from django.shortcuts import render,redirect
-from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
-from django.shortcuts import render,  redirect
+from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
+from .models import Transacion, CuentaDetalle, SubCuenta, LibroMayor
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.core.paginator import Paginator
@@ -16,73 +17,91 @@ from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from django.http import HttpResponse
 from decimal import Decimal
 from reportlab.lib.units import inch
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
+
+
+
 
 
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
 
+def PeriodoContable(request):
+    return render(request,"App_innovaSoft/PeriodoContable.html")
+
 def libroMayor(request):
-    return render(request,"App_innovaSoft/libroMayor.html")
+    CatalogoCuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
+    return render(request, 'App_innovaSoft/libroMayor.html', {'CatalogoCuentas': CatalogoCuentas})
 
-
-def Costos(request):
-    return render(request,"App_innovaSoft/costos.html")
+def CatalogoCuentas(request):
+    return render(request,"App_innovaSoft/CatalogoCuentas.html")
 
 
 #def CatalogoCuentas(request):
  #   return render(request,"App_innovaSoft/CatalogoCuentas.html")
 
-#Vistas CatalogoCuentas
+# Vistas CatalogoCuentas
 def transaccion(request):
-    return render(request,"App_innovaSoft/transaccion.html")
+    CatalogoCuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
+    return render(request, 'App_innovaSoft/transaccion.html', {'CatalogoCuentas': CatalogoCuentas})
+
+# Vistas CatalogoCuentas
+def obtener_catalogo_cuentas(request):
+    CatalogoCuentas = SubCuenta.objects.all()
+    cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
+    return JsonResponse(cuentas_json, safe=False)
 
 
-#METODO PARA CONSULTAR LAS CUENTAS
-def tipos_cuentas(request):
-    # Obtener los filtros del request
-    tipo_cuenta_id = request.GET.get('tipoCuenta')
-    rubro_id = request.GET.get('rubro')
-    cuenta_mayor_id = request.GET.get('cuentaMayor')
+#Guardar transaccion
+@require_POST
+def guardar_transaccion(request):
+    if request.method == 'POST':
+        try:
+            datos_transacciones = json.loads(request.body)  # Carga los datos JSON enviados
+            for transaccion_data in datos_transacciones:
+                id_subcuenta = transaccion_data.get('idSubCuenta')
+                id_cuenta_detalle = transaccion_data.get('idCuentaDetalle')
+                debe = transaccion_data.get('debe', 0)
+                haber = transaccion_data.get('haber', 0)
 
-    # Obtener todos los tipos de cuentas, rubros y cuentas mayores
-    tipos_cuenta = GrupoCuenta.objects.all()
-    rubros = RubroDeAgrupacion.objects.all()
-    cuentas_mayor = CuentaDeMayor.objects.all()
+                # Verifica que el idSubCuenta tenga valor
+                if not id_subcuenta:
+                    return JsonResponse({'status': 'error', 'message': 'Falta el id de SubCuenta en una de las filas'}, status=400)
+                
+                # Obtener instancias de SubCuenta y CuentaDetalle
+                subcuenta = SubCuenta.objects.get(idSubCuenta=id_subcuenta)
+                cuenta_detalle = CuentaDetalle.objects.get(id=id_cuenta_detalle)
 
-    # Filtrar las subcuentas según los filtros seleccionados
-    subcuentas = SubCuenta.objects.select_related('idDeMayor__idRubro__idGrupoCuenta').prefetch_related('detalles')
+                # Crear instancia de Transacion
+                Transacion.objects.create(
+                    idSubCuenta=subcuenta,
+                    idCuentaDetalle=cuenta_detalle,
+                    debe=debe,
+                    haber=haber
+                )
+                
+            return JsonResponse({'status': 'success'}, status=201)
+        
+        except Exception as e:
+            print("Error al guardar transacción:", e)
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-    # Aplicar filtros si están presentes
-    if tipo_cuenta_id:
-        subcuentas = subcuentas.filter(idDeMayor__idRubro__idGrupoCuenta=tipo_cuenta_id)
-
-    if rubro_id:
-        subcuentas = subcuentas.filter(idDeMayor__idRubro__idRubro=rubro_id)
-
-    if cuenta_mayor_id:
-        subcuentas = subcuentas.filter(idDeMayor__idDeMayor=cuenta_mayor_id)
-
-    # Paginación
-    paginator = Paginator(subcuentas, 10)  # Mostrar 10 subcuentas por página
-    page_number = request.GET.get('page')  # Número de página actual
-    page_obj = paginator.get_page(page_number)  # Obtener la página
-
-    # Agregar las subcuentas paginadas al contexto
-    context = {
-        'tipos_cuenta': tipos_cuenta,
-        'rubros': rubros,
-        'cuentas_mayor': cuentas_mayor,
-        'page_obj': page_obj,  # Usar page_obj en la plantilla
-    }
-
-    return render(request, 'App_innovaSoft/CatalogoCuentas.html', context)
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+pass
 
 
-def hojAjustes(request):
-    return render(request,"App_innovaSoft/hojAjustes.html")
 
-#METODO PARA EL LOGIN
+
+
+
+
+
+from django.contrib.auth import authenticate, login as auth_login
+
 def login(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -104,135 +123,52 @@ def login(request):
 def logout(request):
     return render (request,"App_innovaSoft/login.html")
 
-
-
-"METODO PARA VER EL LIBRO MAYOR"
-def libro_mayor_view(request):
-    # Agrupar transacciones por cuenta
-    transacciones_por_cuenta = (
-        Transacion.objects.values('idSubCuenta', 'idSubCuenta__nombre', 'idSubCuenta__codigoCuenta',
-                                  'idCuentaDetalle', 'idCuentaDetalle__nombre', 'idCuentaDetalle__codigoCuenta')
-        .annotate(
-            total_debe=Sum('debe'),
-            total_haber=Sum('haber'),
-            saldo=Sum(F('debe') - F('haber'))
+def agregar_transaccion(request):
+    if request.method == 'POST':
+        cuenta_id = request.POST.get('cuenta')
+        fecha = request.POST.get('fecha')
+        debe = request.POST.get('debe')
+        haber = request.POST.get('haber')
+        
+        # Crea una nueva transacción
+        nueva_transaccion = transaccion(
+            cuenta_id=cuenta_id,
+            fecha=fecha,
+            debe=debe,
+            haber=haber
         )
-        .order_by('idSubCuenta', 'idCuentaDetalle')
-    )
-
-    # Agregar lista de transacciones para cada cuenta en la lista `transacciones_por_cuenta`
-    for cuenta in transacciones_por_cuenta:
-        cuenta_id = cuenta['idSubCuenta'] or cuenta['idCuentaDetalle']
-        cuenta['transacciones'] = Transacion.objects.filter(
-            idSubCuenta=cuenta['idSubCuenta'] if cuenta['idSubCuenta'] else None,
-            idCuentaDetalle=cuenta['idCuentaDetalle'] if cuenta['idCuentaDetalle'] else None
-        ).select_related('idSubCuenta', 'idCuentaDetalle').order_by('idTransacion')
-
-    return render(request, 'App_innovaSoft/libroMayor.html', {
-        'transacciones_por_cuenta': transacciones_por_cuenta,
-    })
-
-
-#METODO PARA GENERAL EL BALANCE DE COMPROBACION
-def generar_balance_de_comprobacion(request):
-    # Crear el archivo PDF
-    nombre_pdf = "balance_de_comprobacion.pdf"
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{nombre_pdf}"'
-    
-    doc = SimpleDocTemplate(response, pagesize=A4)
-    elementos = []
-
-    # Configurar estilos
-    styles = getSampleStyleSheet()
-    titulo_style = ParagraphStyle(
-        "titulo",
-        parent=styles["Title"],
-        alignment=1,  # Centrado
-        fontSize=16,
-        spaceAfter=12
-    )
-    sub_titulo_style = ParagraphStyle(
-        "subtitulo",
-        parent=styles["Normal"],
-        alignment=1,  # Centrado
-        fontSize=12,
-        spaceAfter=12
-    )
-
-    # Obtener datos de la empresa e información del período
-    info_empresa = Informacion.objects.first()
-    nombre_empresa = info_empresa.nombreEmpresa if info_empresa else "Nombre de Empresa No Definido"
-
-    periodo_contable = PeriodoContable.objects.first()
-    fecha_inicio = periodo_contable.fechaInicioDePeriodo if periodo_contable else "Fecha Inicio No Definida"
-    fecha_fin = periodo_contable.fechaFinDePeriodo if periodo_contable else "Fecha Fin No Definida"
-
-    # Agregar nombre de la empresa como título
-    titulo = Paragraph(f"{nombre_empresa}", titulo_style)
-    elementos.append(titulo)
-
-    # Agregar título del balance y fechas en una línea
-    subtitulo = Paragraph("Balance de Comprobación", titulo_style)
-    elementos.append(subtitulo)
-
-    # Centrar las fechas en una sola línea
-    fechas = Paragraph(f"Periodo: {fecha_inicio} - {fecha_fin}", sub_titulo_style)
-    elementos.append(fechas)
-
-    # Añadir un espacio antes de la tabla
-    elementos.append(Spacer(1, 12))
-
-    # Crear la tabla con datos de balance de comprobación
-    datos = [["Código", "Cuenta", "Debe", "Haber"]]  # Encabezados de la tabla
-    total_debe = 0
-    total_haber = 0
-
-    # Obtener transacciones y calcular totales
-    transacciones = Transacion.objects.all()
-    for transaccion in transacciones:
-        cuenta_nombre = ""
-        cuenta_codigo = ""
+        nueva_transaccion.save()
         
-        if transaccion.idSubCuenta:
-            cuenta_nombre = transaccion.idSubCuenta.nombre
-            cuenta_codigo = transaccion.idSubCuenta.codigoCuenta
-        elif transaccion.idCuentaDetalle:
-            cuenta_nombre = transaccion.idCuentaDetalle.nombre
-            cuenta_codigo = transaccion.idCuentaDetalle.codigoCuenta
-        else:
-            cuenta_nombre = "Cuenta desconocida"
-            cuenta_codigo = "Código desconocido"
+        # Redirigir a la página de transacciones después de agregar
+        return redirect('transaccion') 
+
+    return render(request, 'App_innovaSoft/transacciones.html', {'catalogo_cuentas': CatalogoCuentas})
+
+
+
+def guardar_transacciones(request):
+    if request.method == 'POST':
+        transacciones_data = json.loads(request.POST.get('transacciones', '[]'))
         
-        # Valores de debe y haber
-        debe = transaccion.debe
-        haber = transaccion.haber
-        datos.append([cuenta_codigo, cuenta_nombre, f"{debe:.2f}", f"{haber:.2f}"])
-        total_debe += debe
-        total_haber += haber
+        # Procesar cada transacción y guardarla en el libro mayor
+        for transaccion in transacciones_data:
+            numero_cuenta = transaccion.get('numeroCuenta')
+            nombre_cuenta = transaccion.get('nombreCuenta')
+            debe = float(transaccion.get('debe', 0))
+            haber = float(transaccion.get('haber', 0))
 
-    # Agregar fila de totales
-    datos.append(["", "Total", f"{total_debe:.2f}", f"{total_haber:.2f}"])
+            # Crear la entrada en el Libro Mayor
+            nueva_entrada = LibroMayor(
+                numero_cuenta=numero_cuenta,
+                nombre_cuenta=nombre_cuenta,
+                debe=debe,
+                haber=haber,
+                # otros campos necesarios
+            )
+            nueva_entrada.save()
 
-    # Crear la tabla en el PDF
-    tabla = Table(datos, colWidths=[1.5 * inch, 2.5 * inch, 1.5 * inch, 1.5 * inch])
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),  # Fondo gris en encabezado
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-    ]))
-
-    elementos.append(tabla)
-
-    # Construir el PDF
-    doc.build(elementos)
-    return response
-
-
+        return JsonResponse({'status': 'success'})
+    else:
+        return JsonResponse({'status': 'fail'}, status=400)
 
 

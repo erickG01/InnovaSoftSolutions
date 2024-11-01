@@ -21,16 +21,18 @@ from App_innovaSoft import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('inicio/',views.home,name="inicio"),
-
-    path('LibroMayor/',views.libro_mayor_view,name="libroMayor"),
-    path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
-    path('', views.home, name='home'),  # Ruta para la raíz
-    path('Costos/',views.Costos,name="costos"),
-    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
-    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
-    #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
+    path('LibroMayor/',views.libroMayor,name="libroMayor"),
+    path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
     path('login/', views.login,name="login"),
+    path('transaccion/',views.transaccion,name="transaccion"),
+    path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('logout/', views.logout,name="logout"),
-    path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion")
+    path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
+    path('BalanceDeComprobacion', views.generar_balance_de_comprobacion, name="BalanceDeComprobacion"),
+    path('obtener_catalogo_cuentas/', views.obtener_catalogo_cuentas, name='CatalogoCuentas'), 
+    path('guardar_transaccion/', views.guardar_transaccion, name='guardar_transaccion'),
+
 ]
+
+
 
