@@ -1,91 +1,86 @@
 {% extends 'App_innovaSoft/base.html' %}
-
+{% load custom_filters %}
 {%block content%}
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    {% load static %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Libro Mayor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/libroMayor.css' %}"> 
 </head>
 <body>
-
-    
-
     <div class="container mt-5">
         <h2 class="text-center">Libro Mayor</h2><br>
-
-        <!-- Filtros -->
-     <form class="mb-4" method="GET" action="/filtrar">
-        <div class="form-row">
-            <!-- Selección de cuentas -->
-            <div class="form-group col-md-4" >
-                <label for="cuentaSelect">Cuenta</label>
-                <select class="form-control" id="cuentaSelect" name="cuenta">
-                    <option value="" disabled selected>Seleccione una cuenta</option>
-                    <!-- Opciones del catálogo de cuentas -->
-                    {% for cuenta in catalogo_cuentas %}
-                        <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
-                    {% endfor %}
-                </select>
+    
+        <!-- Tabla de libro mayor para cada cuenta -->
+        {% for cuenta in transacciones_por_cuenta %}
+            <h4>
+                Cuenta: 
+                {% if cuenta.idSubCuenta %}
+                    {{ cuenta.idSubCuenta__nombre }} 
+                {% else %}
+                    {{ cuenta.idCuentaDetalle__nombre }} 
+                {% endif %}
+            </h4>
+    
+            <div class="table-container" style="overflow-y: auto; max-height: 300px;">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Código de cuenta</th>
+                            <th>Nombre</th>
+                            <th>Debe</th>
+                            <th>Haber</th>
+                            <th>Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaccion in cuenta.transacciones %}
+                            <tr>
+                                <td>
+                                    {% if transaccion.idSubCuenta %}
+                                        {{ transaccion.idSubCuenta.codigoCuenta }}
+                                    {% else %}
+                                        {{ transaccion.idCuentaDetalle.codigoCuenta }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if transaccion.idSubCuenta %}
+                                        {{ transaccion.idSubCuenta.nombre }}
+                                    {% else %}
+                                        {{ transaccion.idCuentaDetalle.nombre }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ transaccion.debe|floatformat:2 }}</td>
+                                <td>{{ transaccion.haber|floatformat:2 }}</td>
+                                <td>{{ transaccion.debe|floatformat:2 }} - {{ transaccion.haber|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="total-row">
+                            <td colspan="2">TOTAL</td>
+                            <td>{{ cuenta.total_debe }}</td>
+                            <td>{{ cuenta.total_haber }}</td>
+                            <td>{{ cuenta.saldo|absolute }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
-
-            <!-- Fecha de inicio -->
-            <div class="form-group col-md-3">
-                <label for="fechaInicio">Fecha de Inicio</label>
-                <input type="date" class="form-control" id="fechaInicio" name="fecha_inicio">
-            </div>
-
-            <!-- Fecha de fin -->
-            <div class="form-group col-md-3">
-                <label for="fechaFin">Fecha de Fin</label>
-                <input type="date" class="form-control" id="fechaFin" name="fecha_fin">
-            </div>
-
-            <!-- Botón de filtrar -->
-            <div class="form-group col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Filtrar</button>
-            </div>
-        </div>
-    </form>
-
-
-
-<!--Tabla de libro mayor-->
-    <table class="table table-striped table-bordered mt-4">
-        <thead class="thread-dark" style="background-color:rgb(51, 18, 83); color: white;">
-            <tr>
-                <th>Cuenta y Nombre</th>
-                <th colspan="2" class="text-center">Movimientos</th>                   
-                <th>Saldo</th>
-                <th>Balance</th>
-            </tr>
-            <tr>
-                <th></th>
-                <th>Debe</th>
-                <th>Haber</th>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Aquí irían las filas generadas dinámicamente -->
-            <tr>
-                <td>Cuenta de Ejemplo</td>
-                <td>500.00</td>
-                <td>300.00</td>
-                <td>200.00</td>
-                <td>200.00</td>
-            </tr>
-            <!-- Fin de filas de ejemplo -->
-        </tbody>
-    </table>
-
-
+            <br>
+        {% endfor %}
+    </div>
+    
+    
+    
+    
+    
     
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

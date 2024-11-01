@@ -19,9 +19,23 @@ from django.urls import path
 from App_innovaSoft import views 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),                                                   # Ruta para el panel de administración
-    path('inicio/',views.home,name="inicio"),                                          # Ruta para la vista de inicio
-    path('LibroMayor/',views.libroMayor,name="libroMayor"),                            # Ruta para la vista de Libro Mayor
-    path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),             # Ruta para el catálogo de cuentas
-    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),                            # Ruta para la hoja de ajustes
+    path('admin/', admin.site.urls),
+    path('inicio/',views.home,name="inicio"),
+
+    path('LibroMayor/',views.libro_mayor_view,name="libroMayor"),
+    path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
+    path('', views.home, name='home'),  # Ruta para la raíz
+    path('Costos/',views.Costos,name="costos"),
+    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
+    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
+    #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
+    path('login/', views.login,name="login"),
+    path('logout/', views.logout,name="logout"),
+    path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
+    path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
+    path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
+
+    path('transaccion/',views.transaccion,name="transaccion"),
+   
 ]
+

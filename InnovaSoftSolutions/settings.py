@@ -80,6 +80,7 @@ DATABASES = {
         'HOST':'localhost',                         # Host de la base de datos
         'PORT':'5432',                              # Puerto de conexión
     }
+    
 }
 
 # Validación de contraseñas

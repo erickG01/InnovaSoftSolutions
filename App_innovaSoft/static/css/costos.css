@@ -1,0 +1,28 @@
+.tabla{
+    width:35%;
+    margin-left:3rem;
+    margin-top:1rem;
+    position:absolute;
+}
+.costos_txt{
+    margin-top:3rem;
+    margin-left:3rem;
+}
+.contenedor{
+    margin-left:-16rem;
+
+}
+.costoTotales{
+position: absolute;
+margin-left:50rem;
+margin-top:-2rem;
+}
+.tablaCosto{
+    width:48rem;
+    margin-left:-5rem;
+}
+.btn_orden{
+position: absolute;
+margin-left: 35rem;
+margin-top:-3rem;
+}

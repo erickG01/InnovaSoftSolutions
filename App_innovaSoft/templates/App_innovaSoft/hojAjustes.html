@@ -23,9 +23,9 @@
     <!-- Sección de descargas -->
     <div class="mb-4">
         <h5 class="d-inline">Descargar:</h5>
-        <a class="btn btn-secondary m-1">Ajuste de Comprobación</a>
-        <a class="btn btn-secondary m-1">Estado de Resultado</a>
-        <a class="btn btn-secondary m-1">Estado de Capital</a>
+        <a class="btn btn-secondary m-1" href="{% url 'BalanceDeComprobacion' %}">Balance de Comprobación</a>
+        <a class="btn btn-secondary m-1" href="{% url 'EstadoDeResultados' %}">Estado de Resultado</a>
+        <a class="btn btn-secondary m-1" href="{% url 'estadoCapital' %}?format=pdf" >Estado de Capital</a>
         <a class="btn btn-secondary m-1">Balance General</a>
     </div>
 
@@ -38,7 +38,7 @@
                 <th rowspan="2" class="text-center align-middle">Debe</th> 
                 <th rowspan="2" class="text-center align-middle">Haber</th>                    
                 <th colspan="2" class="text-center">Ajustes</th>
-                <th colspan="2" class="text-center align-middle">Balance de Comprobación</th>
+                <th colspan="2" class="text-center align-middle">Balance de ajustes de Comprobación</th>
                 <th rowspan="2" class="text-center align-middle">Acciones</th>
             </tr>
             <tr>

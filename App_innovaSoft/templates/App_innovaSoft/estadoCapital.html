@@ -1,0 +1,111 @@
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de Cambios en el Patrimonio</title>
+    <style>
+        /*Encabezado*/
+        .text-center{
+            text-align: center;
+        }
+        /* Estilos generales para la tabla */
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        /* Estilos para la cabecera de la tabla */
+        .table-custom thead th {
+            background-color: #575656; /* Verde oscuro para el encabezado */
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        /* Estilos para las celdas de la tabla */
+        .table-custom td, .table-custom th {
+            text-align: center;
+            vertical-align: middle;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        /* Alternancia de colores en las filas */
+        .table-custom tbody tr:nth-child(even) {
+            background-color: #f2f2f2; /* Color de fondo para filas pares */
+        }
+
+        /* Estilos para la fila de totales */
+        .table-custom .totals-row {
+            background-color: #f9f9f9; /* Color suave para total */
+            font-weight: bold;
+            border-top: 2px solid #575656;
+        }
+
+        /* Estilos para la tabla de firmas */
+        .signatures-table {
+            width: 100%;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .signatures-table td {
+            padding: 20px;
+            font-weight: bold;
+            border-top: 2px solid #575656;
+            border-bottom: 2px solid #575656;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container my-5">
+    <h1 class="text-center">{{ nombre_empresa }}</h1>
+    <h3 class="text-center">Estado de Cambios en el Patrimonio</h3>
+    <h5 class="text-center">Periodo: {{ fecha_inicio }} - {{ fecha_fin }}</h5>
+
+
+    <table class="table table-custom">
+        <thead>
+            <tr>
+                <th>Cuenta</th>
+                <th>Saldo Inicial</th>
+                <th>Aumentos</th>
+                <th>Disminuciones</th>
+                <th>Saldo Final</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cuenta in cuentas_data %}
+            <tr>
+                <td>{{ cuenta.cuenta }}</td>
+                <td>{{ cuenta.saldo_inicial }}</td>
+                <td>{{ cuenta.aumentos }}</td>
+                <td>{{ cuenta.disminuciones }}</td>
+                <td>{{ cuenta.saldo_inicial|add:cuenta.aumentos|add:cuenta.disminuciones }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="totals-row">
+                <td colspan="4" class="text-end"><strong>Total</strong></td>
+                <td>{{ total_final }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="signatures-table">
+        <tr>
+            <td>Firma RL</td>
+            <td>Firma C.P.</td>
+            <td>Firma R.F.</td>
+        </tr>
+    </table>
+
+    
+</div>
+
+</body>
+</html>
+{% endblock %}
