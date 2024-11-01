@@ -28,11 +28,10 @@ urlpatterns = [
     path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('logout/', views.logout,name="logout"),
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
-    path('BalanceDeComprobacion', views.generar_balance_de_comprobacion, name="BalanceDeComprobacion"),
-    path('obtener_catalogo_cuentas/', views.obtener_catalogo_cuentas, name='CatalogoCuentas'), 
-    path('guardar_transaccion/', views.guardar_transaccion, name='guardar_transaccion'),
+    path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
+    path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
 
+    path('transaccion/',views.transaccion,name="transaccion"),
+   
 ]
-
-
 
