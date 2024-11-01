@@ -1,6 +1,6 @@
 
 from django.shortcuts import render,redirect
-from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
+from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable,Transacion
 from django.shortcuts import render,  redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate
@@ -16,8 +16,17 @@ from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from django.http import HttpResponse
 from decimal import Decimal
 from reportlab.lib.units import inch
+from django.db.models import Sum, F, Func, Value
+from django.db.models.functions import Abs
 
-
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.db.models import Sum, F
+from django.db.models.functions import Abs
+from .models import SubCuenta, CuentaDetalle, Transacion
+from xhtml2pdf import pisa
+from io import BytesIO
+from django.template.loader import render_to_string
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
@@ -82,13 +91,118 @@ def tipos_cuentas(request):
 def hojAjustes(request):
     return render(request,"App_innovaSoft/hojAjustes.html")
 
-<<<<<<< HEAD
 def estadoCapital(request):
-    return render(request,"App_innovaSoft/estadoCapital.html")
+    subcuenta_codigos = ['3202.01', '4202.01', '1103.01']
+    cuenta_detalle_codigos = ['3101.01.01', '3101.02.01']
 
-=======
-#METODO PARA EL LOGIN
->>>>>>> main
+    subcuentas = SubCuenta.objects.filter(codigoCuenta__in=subcuenta_codigos)
+    detalle_cuentas = CuentaDetalle.objects.filter(codigoCuenta__in=cuenta_detalle_codigos)
+
+    # Obtener la información general de la empresa
+    info_empresa = Informacion.objects.first()  # Obtener la primera entrada
+    nombre_empresa = info_empresa.nombreEmpresa if info_empresa else "Nombre de la Empresa"
+
+    # Obtener el periodo contable
+    periodo = PeriodoContable.objects.first()  # Ajusta esto según tu lógica
+    fecha_inicio = periodo.fechaInicioDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
+    fecha_fin = periodo.fechaFinDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
+
+    # Obtenemos las transacciones y calculamos el saldo absoluto
+    subcuenta_transacciones = Transacion.objects.filter(idSubCuenta__in=subcuentas).values('idSubCuenta').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    )
+
+    cuenta_detalle_transacciones = Transacion.objects.filter(idCuentaDetalle__in=detalle_cuentas).values('idCuentaDetalle').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    )
+
+    cuentas_data = []
+    saldo_3202_01 = 0  # Inicializamos para almacenar el saldo de 3202.01
+    disminuciones_total = 0
+
+    # Clasificamos las subcuentas
+    for subcuenta in subcuentas:
+        transaccion = next(
+            (item for item in subcuenta_transacciones if item['idSubCuenta'] == subcuenta.idSubCuenta),
+            {'saldo_absoluto': 0}
+        )
+
+        # Clasificación de saldo según el tipo de cuenta
+        if subcuenta.codigoCuenta == '1103.01':  # Disminuciones
+            saldo_inicial = aumentos = 0
+            disminuciones = transaccion['saldo_absoluto']
+            disminuciones_total += disminuciones
+        elif subcuenta.codigoCuenta == '3202.01':  # Saldo inicial
+            saldo_inicial = transaccion['saldo_absoluto']
+            saldo_3202_01 = saldo_inicial  # Guardamos el saldo para usar después
+            aumentos = disminuciones = 0
+        elif subcuenta.codigoCuenta == '4202.01':  # Aumentos
+            saldo_inicial = aumentos = 0
+            disminuciones = transaccion['saldo_absoluto']
+            disminuciones_total += disminuciones
+        
+        cuentas_data.append({
+            'cuenta': subcuenta.nombre,
+            'saldo_inicial': saldo_inicial,
+            'aumentos': aumentos,
+            'disminuciones': disminuciones
+        })
+
+    capitales_iniciales = 0
+    # Clasificamos las cuentas de detalle de manera similar
+    for cuenta_detalle in detalle_cuentas:
+        transaccion = next(
+            (item for item in cuenta_detalle_transacciones if item['idCuentaDetalle'] == cuenta_detalle.idCuentaDetalle),
+            {'saldo_absoluto': 0}
+        )
+
+        if cuenta_detalle.codigoCuenta == '3101.01.01': 
+            saldo_inicial = transaccion['saldo_absoluto']
+            capitales_iniciales += saldo_inicial
+            aumentos = disminuciones = 0
+        elif cuenta_detalle.codigoCuenta == '3101.02.01': 
+            aumentos = disminuciones = 0
+            saldo_inicial = transaccion['saldo_absoluto']
+            capitales_iniciales += saldo_inicial
+
+        cuentas_data.append({
+            'cuenta': cuenta_detalle.nombre,
+            'saldo_inicial': saldo_inicial,
+            'aumentos': aumentos,
+            'disminuciones': disminuciones
+        })
+
+    # Aseguramos que el resultado final sea positivo
+    total_final = saldo_3202_01 - disminuciones_total + capitales_iniciales
+    total_final = abs(total_final)  # Convertimos a valor absoluto
+
+    # Verificamos si se solicita un PDF
+    if request.GET.get('format') == 'pdf':
+        # Renderizamos el HTML en un string
+        html_string = render_to_string('App_innovaSoft/estadoCapital.html', {
+            'cuentas_data': cuentas_data,
+            'total_final': total_final,
+            'nombre_empresa': nombre_empresa,  # Pasamos el nombre de la empresa
+            'fecha_inicio': fecha_inicio,       # Pasamos la fecha de inicio
+            'fecha_fin': fecha_fin,             # Pasamos la fecha de fin
+        })
+
+        # Generamos el PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="estado_capital.pdf"'
+        pisa_status = pisa.CreatePDF(html_string, dest=response)
+
+        # Retornamos el PDF generado
+        if pisa_status.err:
+            return HttpResponse('Error al generar el PDF')
+        
+        return response
+
+    # Si no se solicita un PDF, no se devuelve nada
+    return HttpResponse('No se puede generar el PDF, por favor verifica la solicitud.')
+
+
+
 def login(request):
     if request.method == 'POST':
         username = request.POST['username']

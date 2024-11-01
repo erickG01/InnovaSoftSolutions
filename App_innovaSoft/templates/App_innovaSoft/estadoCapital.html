@@ -1,103 +1,111 @@
-{% extends 'App_innovaSoft/base.html' %}
-
 {% block content %}
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estado de Cambios en el Patrimonio</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/estadoCapital.css' %}"> 
-    
+    <style>
+        /*Encabezado*/
+        .text-center{
+            text-align: center;
+        }
+        /* Estilos generales para la tabla */
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        /* Estilos para la cabecera de la tabla */
+        .table-custom thead th {
+            background-color: #575656; /* Verde oscuro para el encabezado */
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        /* Estilos para las celdas de la tabla */
+        .table-custom td, .table-custom th {
+            text-align: center;
+            vertical-align: middle;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        /* Alternancia de colores en las filas */
+        .table-custom tbody tr:nth-child(even) {
+            background-color: #f2f2f2; /* Color de fondo para filas pares */
+        }
+
+        /* Estilos para la fila de totales */
+        .table-custom .totals-row {
+            background-color: #f9f9f9; /* Color suave para total */
+            font-weight: bold;
+            border-top: 2px solid #575656;
+        }
+
+        /* Estilos para la tabla de firmas */
+        .signatures-table {
+            width: 100%;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .signatures-table td {
+            padding: 20px;
+            font-weight: bold;
+            border-top: 2px solid #575656;
+            border-bottom: 2px solid #575656;
+        }
+    </style>
 </head>
 <body>
 
 <div class="container my-5">
-    <h2 class="text-center">InnovaSoft Solutions S.A</h2>
-    <h4 class="text-center">Estado de Cambios en el Patrimonio</h4>
-    <h5 class="text-center">Periodo: </h5>
+    <h1 class="text-center">{{ nombre_empresa }}</h1>
+    <h3 class="text-center">Estado de Cambios en el Patrimonio</h3>
+    <h5 class="text-center">Periodo: {{ fecha_inicio }} - {{ fecha_fin }}</h5>
 
-    <table class="table table-bordered table-hover table-custom">
+
+    <table class="table table-custom">
         <thead>
             <tr>
                 <th>Cuenta</th>
-                <th>S Inicial</th>
+                <th>Saldo Inicial</th>
                 <th>Aumentos</th>
                 <th>Disminuciones</th>
-                <th>S Final</th>
+                <th>Saldo Final</th>
             </tr>
         </thead>
         <tbody>
+            {% for cuenta in cuentas_data %}
             <tr>
-                <td>Capital Social</td>
-                <td>1000</td>
-                <td>0</td>
-                <td>0</td>
-                <td>1000</td>
+                <td>{{ cuenta.cuenta }}</td>
+                <td>{{ cuenta.saldo_inicial }}</td>
+                <td>{{ cuenta.aumentos }}</td>
+                <td>{{ cuenta.disminuciones }}</td>
+                <td>{{ cuenta.saldo_inicial|add:cuenta.aumentos|add:cuenta.disminuciones }}</td>
             </tr>
-            <tr>
-                <td>Superávit Donado</td>
-                <td>50</td>
-                <td>0</td>
-                <td>0</td>
-                <td>50</td>
-            </tr>
-            <tr>
-                <td>Reservas</td>
-                <td>65</td>
-                <td>5</td>
-                <td>0</td>
-                <td>70</td>
-            </tr>
-            <tr>
-                <td>Revalorización del Patrimonio</td>
-                <td>40</td>
-                <td>20</td>
-                <td>0</td>
-                <td>60</td>
-            </tr>
-            <tr>
-                <td>Utilidad de Ejercicio</td>
-                <td>30</td>
-                <td>50</td>
-                <td>0</td>
-                <td>80</td>
-            </tr>
-            <tr>
-                <td>Utilidad de Ejercicios Anteriores</td>
-                <td>10</td>
-                <td>0</td>
-                <td>0</td>
-                <td>10</td>
-            </tr>
-            <tr>
-                <td>Superávit Valorización</td>
-                <td>500</td>
-                <td>100</td>
-                <td>0</td>
-                <td>600</td>
-            </tr>
+            {% endfor %}
             <tr class="totals-row">
-                <td>Totales</td>
-                <td>1695</td>
-                <td>175</td>
-                <td>30</td>
-                <td>1840</td>
+                <td colspan="4" class="text-end"><strong>Total</strong></td>
+                <td>{{ total_final }}</td>
             </tr>
         </tbody>
     </table>
 
-    <div class="signatures">
-        <span>Firmas RL</span>
-        <span>C.P.</span>
-        <span>R.F.</span>
-    </div>
+    <table class="signatures-table">
+        <tr>
+            <td>Firma RL</td>
+            <td>Firma C.P.</td>
+            <td>Firma R.F.</td>
+        </tr>
+    </table>
+
+    
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-{% endblock %}
 </body>
 </html>
+{% endblock %}
