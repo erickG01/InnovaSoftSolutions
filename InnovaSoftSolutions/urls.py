@@ -28,6 +28,7 @@ urlpatterns = [
     path('Costos/',views.Costos,name="costos"),
     path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
+     path('balanceGeneral/',views.balanceGeneral,name="balanceGeneral"),
     path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
