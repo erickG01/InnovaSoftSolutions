@@ -79,8 +79,7 @@ DATABASES = {
         'PASSWORD':'inventario123',                 # Contraseña de la base de datos
         'HOST':'localhost',                         # Host de la base de datos
         'PORT':'5432',                              # Puerto de conexión
-    }
-    
+    }    
 }
 
 # Validación de contraseñas

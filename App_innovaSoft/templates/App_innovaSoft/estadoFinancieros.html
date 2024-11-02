@@ -1,0 +1,59 @@
+{% extends 'App_innovaSoft/base.html' %}
+
+{% block content %}
+{% load static %}
+<div class="container mt-5">
+    <h2 class="text-center">Estados Financieros</h2><br>
+
+    <!-- Sección de descargas -->
+    <div class="row justify-content-center">
+        <div class="col-sm-4 mb-3 mb-sm-0">
+            <div class="card">
+                <div class="card-body custom-card-body">
+                    <h5 class="card-title"><b>Balance de Comprobación</b></h5>
+                    <p class="card-text">Descarga el balance de comprobación para revisar tus cuentas.</p>
+                    <a class="btn btn-outline-danger" href="{% url 'BalanceDeComprobacion' %}" aria-label="Descargar Balance de Comprobación">Descargar</a>
+                    <i class="bi bi-journal-bookmark icon-style"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 mb-3 mb-sm-0">
+            <div class="card">
+                <div class="card-body custom-card-body">
+                    <h5 class="card-title"><b>Estado de Resultado</b></h5>
+                    <p class="card-text">Consulta el estado de resultados para evaluar tu desempeño.</p>
+                    <a class="btn btn-outline-danger" href="{% url 'EstadoDeResultados' %}" aria-label="Descargar Estado de Resultado">Descargar</a>
+                    <i class="bi bi-file-earmark-text icon-style"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="row justify-content-center">
+        <div class="col-sm-4 mb-3 mb-sm-0">
+            <div class="card">
+                <div class="card-body custom-card-body">
+                    <h5 class="card-title"><b>Estado de Capital</b></h5>
+                    <p class="card-text">Revisa el estado de capital para conocer la situación de tus inversiones.</p>
+                    <a class="btn btn-outline-danger" href="{% url 'estadoCapital' %}?format=pdf" aria-label="Descargar Estado de Capital">Descargar</a>
+                    <i class="bi bi-graph-up icon-style"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 mb-3 mb-sm-0">
+            <div class="card">
+                <div class="card-body custom-card-body">
+                    <h5 class="card-title"><b>Balance General</b></h5>
+                    <p class="card-text">Accede al balance general para un panorama completo de tus finanzas.</p>
+                    <a class="btn btn-outline-danger" href="#" aria-label="Descargar Balance General">Descargar</a>
+                    <i class="bi bi-bar-chart icon-style"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% endblock %}

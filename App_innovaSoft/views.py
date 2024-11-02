@@ -1,41 +1,48 @@
-
+from django.shortcuts import render
+from django.shortcuts import render
 from django.shortcuts import render,redirect
-from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
 from django.shortcuts import render,  redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate
-from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login as auth_login
-from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.http import HttpResponse
+from django.http import JsonResponse
 from django.db.models import Sum, F
-from django.shortcuts import render
+from django.db.models import Q
+from django.db.models.functions import Abs
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_POST
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph,Spacer
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
-from django.http import HttpResponse
-from decimal import Decimal
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
-from django.db.models import Q
-from django.db.models.functions import Abs
 from xhtml2pdf import pisa
+
+from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
+
+from decimal import Decimal
 from io import BytesIO
-from django.template.loader import render_to_string
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 import json
-# Create your views here.
+
+# Crea tus vistas aquí.
 def home(request):
-    return render(request,"App_innovaSoft/inicio.html")              # Renderiza la plantilla de inicio
+    return render(request,"App_innovaSoft/inicio.html")                 # Renderiza la plantilla de inicio
 
 def libroMayor(request):
-    return render(request,"App_innovaSoft/libroMayor.html")          # Renderiza la plantilla del Libro Mayor
-
+    return render(request,"App_innovaSoft/libroMayor.html")             # Renderiza la plantilla del Libro Mayor
 
 def Costos(request):
     return render(request,"App_innovaSoft/costos.html")
 
+def hojAjustes(request):
+    return render(request,"App_innovaSoft/hojAjustes.html")
+
+def estadoFinancieros(request):
+    return render(request, 'App_innovaSoft/estadoFinancieros.html')     # Renderiza la plantilla de estados financieros
 
 #def CatalogoCuentas(request):
  #   return render(request,"App_innovaSoft/CatalogoCuentas.html")
@@ -44,6 +51,11 @@ def Costos(request):
 def transaccion(request):
     return render(request,"App_innovaSoft/transaccion.html")
 
+# Vistas CatalogoCuentas
+def obtener_catalogo_cuentas(request):
+    CatalogoCuentas = SubCuenta.objects.all()
+    cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
+    return JsonResponse(cuentas_json, safe=False)
 
 #METODO PARA CONSULTAR LAS CUENTAS
 def tipos_cuentas(request):
@@ -82,12 +94,7 @@ def tipos_cuentas(request):
         'cuentas_mayor': cuentas_mayor,
         'page_obj': page_obj,  # Usar page_obj en la plantilla
     }
-
     return render(request, 'App_innovaSoft/CatalogoCuentas.html', context)
-
-
-def hojAjustes(request):
-    return render(request,"App_innovaSoft/hojAjustes.html")
 
 #METODO PARA EL LOGIN
 def login(request):
@@ -111,9 +118,7 @@ def login(request):
 def logout(request):
     return render (request,"App_innovaSoft/login.html")
 
-
-
-"METODO PARA VER EL LIBRO MAYOR"
+# METODO PARA VER EL LIBRO MAYOR
 def libro_mayor_view(request):
     # Agrupar transacciones por cuenta
     transacciones_por_cuenta = (
@@ -138,7 +143,6 @@ def libro_mayor_view(request):
     return render(request, 'App_innovaSoft/libroMayor.html', {
         'transacciones_por_cuenta': transacciones_por_cuenta,
     })
-
 
 #METODO PARA GENERAL EL BALANCE DE COMPROBACION
 def generar_balance_de_comprobacion(request):
@@ -387,7 +391,6 @@ def obtener_nombre_cuenta(codigo_cuenta):
     except CuentaDetalle.DoesNotExist:
         return ""
     
-
 def estadoCapital(request):
     subcuenta_codigos = ['3202.01', '4202.01', '1103.01']
     cuenta_detalle_codigos = ['3101.01.01', '3101.02.01']
@@ -498,16 +501,7 @@ def estadoCapital(request):
     # Si no se solicita un PDF, no se devuelve nada
     return HttpResponse('No se puede generar el PDF, por favor verifica la solicitud.')   
 
-
 # Vistas CatalogoCuentas
 def transaccion(request):
     CatalogoCuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
     return render(request, 'App_innovaSoft/transaccion.html', {'CatalogoCuentas': CatalogoCuentas})
-
-# Vistas CatalogoCuentas
-def obtener_catalogo_cuentas(request):
-    CatalogoCuentas = SubCuenta.objects.all()
-    cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
-    return JsonResponse(cuentas_json, safe=False)
-
-

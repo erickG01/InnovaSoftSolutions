@@ -1,3 +1,14 @@
 .align-middle {
     vertical-align: middle; /* Centrar verticalmente */
 }
+
+.custom-card-body {
+    background-color: rgb(26, 28, 48);
+    color: white;
+}
+
+.icon-style {
+    font-size: 2rem;
+    color: white;
+    margin-left: 150px;
+}

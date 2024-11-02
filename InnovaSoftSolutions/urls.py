@@ -20,22 +20,21 @@ from App_innovaSoft import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('inicio/',views.home,name="inicio"),
-
-    path('LibroMayor/',views.libro_mayor_view,name="libroMayor"),
-    path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
-    path('', views.home, name='home'),  # Ruta para la raíz
-    path('Costos/',views.Costos,name="costos"),
-    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
-    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
-    #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
     path('logout/', views.logout,name="logout"),
+    path('', views.home, name='home'),  # Ruta para la raíz
+    path('inicio/',views.home,name="inicio"),
+
+    path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
+    path('Costos/',views.Costos,name="costos"),
+    path('LibroMayor/',views.libro_mayor_view,name="libroMayor"),
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
     path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
+    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
+    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
+    path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
+    #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
 
-    path('transaccion/',views.transaccion,name="transaccion"),
-   
+    path('transaccion/',views.transaccion,name="transaccion"),   
 ]
-
