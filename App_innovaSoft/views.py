@@ -8,7 +8,6 @@ from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render
 from django.db.models import Sum, F
-from django.shortcuts import render
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph,Spacer
@@ -23,8 +22,10 @@ from xhtml2pdf import pisa
 from io import BytesIO
 from django.template.loader import render_to_string
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 import json
+from django.db import transaction
+
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
@@ -86,6 +87,8 @@ def tipos_cuentas(request):
     return render(request, 'App_innovaSoft/CatalogoCuentas.html', context)
 
 
+
+
 def hojAjustes(request):
     return render(request,"App_innovaSoft/hojAjustes.html")
 
@@ -138,6 +141,54 @@ def libro_mayor_view(request):
     return render(request, 'App_innovaSoft/libroMayor.html', {
         'transacciones_por_cuenta': transacciones_por_cuenta,
     })
+
+@csrf_exempt
+def save_transactions(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            transactions = data.get('transactions', [])
+
+            # Obtener el último ID de Transacion
+            last_id = Transacion.objects.order_by('-idTransacion').first()
+            next_id = last_id.idTransacion + 1 if last_id else 1  # Empezar desde 1 si no hay transacciones previas
+
+            # Crear las transacciones en una transacción atómica
+            with transaction.atomic():
+                for transaction_data in transactions:
+                    cuenta_id = transaction_data['cuenta_id']
+                    debe = transaction_data['debe']
+                    haber = transaction_data['haber']
+
+                    # Obtener la cuenta relacionada (SubCuenta o CuentaDetalle)
+                    try:
+                        subcuenta = SubCuenta.objects.get(idSubCuenta=cuenta_id)
+                        Transacion.objects.create(idTransacion=next_id, idSubCuenta=subcuenta, debe=debe, haber=haber)
+                    except SubCuenta.DoesNotExist:
+                        try:
+                            cuenta_detalle = CuentaDetalle.objects.get(idCuentaDetalle=cuenta_id)
+                            Transacion.objects.create(idTransacion=next_id, idCuentaDetalle=cuenta_detalle, debe=debe, haber=haber)
+                        except CuentaDetalle.DoesNotExist:
+                            continue  # Ignorar cuentas no válidas
+                    next_id += 1  # Incrementar el ID para la próxima transacción
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            print("Error al guardar transacciones:", e)  # Log de error en la consola
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error'}, status=400)
+
+
+
+def transaccion_view(request):
+    # Obtener todas las subcuentas y sus cuentas de detalle
+    subcuentas = SubCuenta.objects.prefetch_related('detalles').all()
+
+    context = {
+        'subcuentas_filtradas': subcuentas
+    }
+    return render(request, 'App_innovaSoft/transaccion.html', context)
+
 
 
 #METODO PARA GENERAL EL BALANCE DE COMPROBACION
@@ -354,6 +405,7 @@ def generar_estado_de_resultados(request):
     tasa_impuesto = Decimal(0.15)
     impuesto = utilidad_antes_impuesto * tasa_impuesto
     utilidad_neta = utilidad_antes_impuesto - impuesto
+    registrar_utilidad_neta(utilidad_neta)
     datos.append(["", "Impuesto (15%)", f"{impuesto:.2f}"])
     datos.append(["", "Utilidad Neta", f"{utilidad_neta:.2f}"])
 
@@ -386,6 +438,54 @@ def obtener_nombre_cuenta(codigo_cuenta):
         return cuenta_detalle.nombre
     except CuentaDetalle.DoesNotExist:
         return ""
+    
+def registrar_utilidad_neta(utilidad_neta):
+    """
+    Registra o actualiza la transacción correspondiente a la cuenta '3202.01' en la tabla Transacion.
+    Si la utilidad es positiva, se registra en el haber; si es negativa, en el debe.
+    """
+    # Convertir a valor absoluto
+    valor_abs_utilidad_neta = abs(utilidad_neta)
+
+    try:
+        # Iniciar transacción para asegurar la integridad
+        with transaction.atomic():
+            # Buscar la cuenta de detalle correspondiente
+            cuenta_utilidad = SubCuenta.objects.get(codigoCuenta="3202.01")
+
+            # Verificar si ya existe una transacción para esta cuenta
+            transaccion_existente = Transacion.objects.filter(idSubCuenta=cuenta_utilidad).first()
+
+            if transaccion_existente:
+                print("Transacción existente encontrada, actualizando valores...")
+                # Actualizar valores en caso de que exista la transacción
+                if utilidad_neta >= 0:
+                    transaccion_existente.haber = valor_abs_utilidad_neta
+                    transaccion_existente.debe = 0
+                else:
+                    transaccion_existente.debe = valor_abs_utilidad_neta
+                    transaccion_existente.haber = 0
+                transaccion_existente.save()
+            else:
+                # Crear una nueva transacción en caso de que no exista
+                print("No se encontró transacción existente. Creando una nueva...")
+                nueva_transaccion = Transacion(
+                    idTransacion=29,
+                    idSubCuenta=cuenta_utilidad,
+                    debe=valor_abs_utilidad_neta if utilidad_neta < 0 else 0,
+                    haber=valor_abs_utilidad_neta if utilidad_neta >= 0 else 0,
+                )
+                nueva_transaccion.save()
+                print("Nueva transacción creada exitosamente.")
+
+    except CuentaDetalle.DoesNotExist:
+        print("Error: No se encontró la cuenta con el código '3202.01'.")
+    except Exception as e:
+        print(f"Ocurrió un error al registrar la utilidad neta: {e}")
+
+
+
+
     
 
 def estadoCapital(request):

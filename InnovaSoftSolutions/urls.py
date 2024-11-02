@@ -27,15 +27,13 @@ urlpatterns = [
     path('', views.home, name='home'),  # Ruta para la raíz
     path('Costos/',views.Costos,name="costos"),
     path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
-    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
+    path('transacciones/', views.transaccion_view, name='transaccion'),  # Transacciones
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
     path('logout/', views.logout,name="logout"),
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
     path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
-
-    path('transaccion/',views.transaccion,name="transaccion"),
-   
+    path('save_transactions/', views.save_transactions, name='save_transactions')
 ]
 

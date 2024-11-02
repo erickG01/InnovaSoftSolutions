@@ -262,4 +262,11 @@ class EstadoDeResultados(models.Model):
             return self.nombre
       class Meta:
             db_table='estadoDeResultados'
-            ordering=['idEstadoDeResultados']     
+            ordering=['idEstadoDeResultados']   
+class Producto(models.Model):
+      idProducto=models.AutoField(primary_key=True)
+      idSubCuenta=models.ForeignKey(SubCuenta,on_delete=models.CASCADE)
+      nombre=models.CharField(max_length=256,unique=True)
+      precio=models.DecimalField(max_digits=10, decimal_places=2)
+      costo=models.DecimalField(max_digits=10,decimal_places=2,null=True)
+      
