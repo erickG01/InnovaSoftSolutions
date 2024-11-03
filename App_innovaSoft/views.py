@@ -82,6 +82,7 @@ def tipos_cuentas(request):
     }
 
     return render(request, 'App_innovaSoft/CatalogoCuentas.html', context)
+
 #funciones para usar en balance general y estado de capital
 
 def obtener_info_empresa():
@@ -206,8 +207,23 @@ def balanceGeneral(request):
         'total_pasivo_capital': total_pasivo_capital,
         'capitales_iniciales': capitales_iniciales,
     }
+    
+    
+    if request.GET.get('format') == 'pdf':
+        # Renderizar el HTML como string
+        html_string = render_to_string("App_innovaSoft/balanceGeneral.html", context)
 
+        # Crear el PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="balance_general.pdf"'
+        pisa_status = pisa.CreatePDF(html_string, dest=response,encoding='utf-8')
 
+        # Verificar si hubo un error al generar el PDF
+        if pisa_status.err:
+            return HttpResponse("Error al generar el PDF")
+
+        return response
+    
     return render(request, "App_innovaSoft/balanceGeneral.html", context)
 
 
@@ -223,14 +239,11 @@ def estadoCapital(request):
     subcuentas = SubCuenta.objects.filter(codigoCuenta__in=subcuenta_codigos)
     detalle_cuentas = CuentaDetalle.objects.filter(codigoCuenta__in=cuenta_detalle_codigos)
 
-    # Obtener la información general de la empresa
-    info_empresa = Informacion.objects.first()  # Obtener la primera entrada
-    nombre_empresa = info_empresa.nombreEmpresa if info_empresa else "Nombre de la Empresa"
 
-    # Obtener el periodo contable
-    periodo = PeriodoContable.objects.first()  # Ajusta esto según tu lógica
-    fecha_inicio = periodo.fechaInicioDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
-    fecha_fin = periodo.fechaFinDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
+    # Obtener la información de la empresa y las fechas del periodo
+    nombre_empresa = obtener_info_empresa()
+    fecha_inicio, fecha_fin = obtener_fechas_periodo()
+
 
     # Obtenemos las transacciones y calculamos el saldo absoluto
     subcuenta_transacciones = Transacion.objects.filter(idSubCuenta__in=subcuentas).values('idSubCuenta').annotate(
@@ -313,7 +326,7 @@ def estadoCapital(request):
     total_final = abs(total_final)  # Convertimos a valor absoluto
 
     # Guardar capitales_iniciales en la sesión como float
-    request.session['capitales_iniciales'] = float(capitales_iniciales)  # Convertimos a float
+    request.session['capitales_iniciales'] = float(total_final)  # Convertimos a float
 
 
    
