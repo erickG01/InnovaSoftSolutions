@@ -138,24 +138,45 @@ def libro_mayor_view(request):
         'transacciones_por_cuenta': transacciones_por_cuenta,
     })
 
-@csrf_exempt  # Solo si no estás usando el CSRF token
+@csrf_exempt
 def save_transactions(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             transactions = data.get('transactions', [])
-            # Procesa las transacciones aquí, por ejemplo, guardarlas en la base de datos
-            for transaction in transactions:
-                cuenta_id = transaction.get('cuenta_id')
-                debe = transaction.get('debe')
-                haber = transaction.get('haber')
-                # Asegúrate de hacer las validaciones necesarias y guardar en la base de datos
+            last_id = Transacion.objects.order_by('-idTransacion').first()
+            next_id = last_id.idTransacion + 1 if last_id else 1  # Start from 1 if no previous transactions
+
+            # Start atomic transaction
+            with transaction.atomic():
+                for transaction_data in transactions:
+                    cuenta_id = transaction_data['cuenta_id']
+                    cuenta_id_type = transaction_data.get('cuenta_id_type')  # This new field indicates type
+                    debe = transaction_data['debe']
+                    haber = transaction_data['haber']
+
+                    if cuenta_id_type == 'subcuenta':
+                        try:
+                            subcuenta = SubCuenta.objects.get(idSubCuenta=cuenta_id)
+                            Transacion.objects.create(idTransacion=next_id, idSubCuenta=subcuenta, debe=debe, haber=haber)
+                        except SubCuenta.DoesNotExist:
+                            continue  # Skip invalid SubCuenta
+                    elif cuenta_id_type == 'cuentadetalle':
+                        try:
+                            cuenta_detalle = CuentaDetalle.objects.get(idCuentaDetalle=cuenta_id)
+                            Transacion.objects.create(idTransacion=next_id, idCuentaDetalle=cuenta_detalle, debe=debe, haber=haber)
+                        except CuentaDetalle.DoesNotExist:
+                            continue  # Skip invalid CuentaDetalle
+
+                    next_id += 1  # Increment ID for next transaction
 
             return JsonResponse({'status': 'success'})
         except Exception as e:
+            print("Error al guardar transacciones:", e)  # Log error to console
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    else:
-        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+    return JsonResponse({'status': 'error'}, status=400)
+
+
 
 def transaccion_view(request):
     # Obtener todas las subcuentas y sus cuentas de detalle
