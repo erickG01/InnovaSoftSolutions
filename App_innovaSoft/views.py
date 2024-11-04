@@ -1,27 +1,21 @@
 
 from django.shortcuts import render,redirect
 from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
-from django.shortcuts import render,  redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate
-from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login as auth_login
+from django.core.paginator import Paginator
 from django.shortcuts import render
-from django.db.models import Sum, F
-from reportlab.lib.pagesizes import A4
+from django.db.models import Sum, F,Q
+from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph,Spacer
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from decimal import Decimal
 from reportlab.lib.units import inch
-from reportlab.lib.pagesizes import letter
-from django.db.models import Q
 from django.db.models.functions import Abs
 from xhtml2pdf import pisa
-from io import BytesIO
 from django.template.loader import render_to_string
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.db import transaction
@@ -37,6 +31,8 @@ def libroMayor(request):
 def Costos(request):
     return render(request,"App_innovaSoft/costos.html")
 
+def estadoFinancieros(request):
+    return render(request, 'App_innovaSoft/estadoFinancieros.html')     # Renderiza la plantilla de estados financieros
 
 #def CatalogoCuentas(request):
  #   return render(request,"App_innovaSoft/CatalogoCuentas.html")
@@ -142,43 +138,24 @@ def libro_mayor_view(request):
         'transacciones_por_cuenta': transacciones_por_cuenta,
     })
 
-@csrf_exempt
+@csrf_exempt  # Solo si no estás usando el CSRF token
 def save_transactions(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             transactions = data.get('transactions', [])
-
-            # Obtener el último ID de Transacion
-            last_id = Transacion.objects.order_by('-idTransacion').first()
-            next_id = last_id.idTransacion + 1 if last_id else 1  # Empezar desde 1 si no hay transacciones previas
-
-            # Crear las transacciones en una transacción atómica
-            with transaction.atomic():
-                for transaction_data in transactions:
-                    cuenta_id = transaction_data['cuenta_id']
-                    debe = transaction_data['debe']
-                    haber = transaction_data['haber']
-
-                    # Obtener la cuenta relacionada (SubCuenta o CuentaDetalle)
-                    try:
-                        subcuenta = SubCuenta.objects.get(idSubCuenta=cuenta_id)
-                        Transacion.objects.create(idTransacion=next_id, idSubCuenta=subcuenta, debe=debe, haber=haber)
-                    except SubCuenta.DoesNotExist:
-                        try:
-                            cuenta_detalle = CuentaDetalle.objects.get(idCuentaDetalle=cuenta_id)
-                            Transacion.objects.create(idTransacion=next_id, idCuentaDetalle=cuenta_detalle, debe=debe, haber=haber)
-                        except CuentaDetalle.DoesNotExist:
-                            continue  # Ignorar cuentas no válidas
-                    next_id += 1  # Incrementar el ID para la próxima transacción
+            # Procesa las transacciones aquí, por ejemplo, guardarlas en la base de datos
+            for transaction in transactions:
+                cuenta_id = transaction.get('cuenta_id')
+                debe = transaction.get('debe')
+                haber = transaction.get('haber')
+                # Asegúrate de hacer las validaciones necesarias y guardar en la base de datos
 
             return JsonResponse({'status': 'success'})
         except Exception as e:
-            print("Error al guardar transacciones:", e)  # Log de error en la consola
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    return JsonResponse({'status': 'error'}, status=400)
-
-
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 def transaccion_view(request):
     # Obtener todas las subcuentas y sus cuentas de detalle

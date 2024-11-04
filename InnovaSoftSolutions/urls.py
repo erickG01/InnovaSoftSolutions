@@ -34,6 +34,7 @@ urlpatterns = [
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
     path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
-    path('save_transactions/', views.save_transactions, name='save_transactions')
+    path('save_transactions/', views.save_transactions, name='save_transactions'),
+    path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
 ]
 

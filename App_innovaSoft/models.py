@@ -16,10 +16,10 @@ class Departamento(models.Model):
 #Prestaciones
 class Prestaciones(models.Model):
         idPrestaciones=models.AutoField(primary_key=True,null=False)
-        tasaSeguro=models.DecimalField(max_digits=4,decimal_places=4,null=False)
-        tasaAFP=models.DecimalField(max_digits=4,decimal_places=4,null=False)
-        tasaIncaf=models.DecimalField(max_digits=4,decimal_places=3,null=False)
-        recargoPorVacaciones=models.DecimalField(max_digits=4,decimal_places=3,null=False)
+        tasaSeguro = models.DecimalField(max_digits=5, decimal_places=4, null=False) 
+        tasaAFP = models.DecimalField(max_digits=5, decimal_places=4, null=False)     
+        tasaIncaf = models.DecimalField(max_digits=3, decimal_places=2, null=False)   
+        recargoPorVacaciones = models.DecimalField(max_digits=4, decimal_places=2, null=False)  
 
         
         def __str__(self):
@@ -69,7 +69,9 @@ class OrdenTrabajo(models.Model):
       fechaInico=models.DateField()
       fechaFin=models.DateField()
       personal=models.TextField()
-
+      materiaPrima=models.TextField()
+      costoManoDeObra=models.DecimalField(max_digits=10,decimal_places=2)
+      costoMateriaPrima=models.DecimalField(max_digits=10,decimal_places=2)
       
       def __str__(self):
             return self.nombre
