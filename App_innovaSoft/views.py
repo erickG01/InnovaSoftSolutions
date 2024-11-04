@@ -14,7 +14,6 @@ from django.http import HttpResponse, JsonResponse
 from decimal import Decimal
 from reportlab.lib.units import inch
 from django.db.models.functions import Abs
-from xhtml2pdf import pisa
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 import json
