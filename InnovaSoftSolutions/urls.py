@@ -25,13 +25,13 @@ urlpatterns = [
     path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
     path('login/', views.login,name="login"),
     path('transaccion/',views.transaccion,name="transaccion"),
-    path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
+    path('agregar/',views.guardar_transaccion, name='agregar_transaccion'),
     path('logout/', views.logout,name="logout"),
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
     path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
-
     path('transaccion/',views.transaccion,name="transaccion"),
+    path('inventario/',views.inventario,name='inventario'),
    
 ]
 

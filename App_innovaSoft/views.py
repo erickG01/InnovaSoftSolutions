@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from .models import Transacion, CuentaDetalle, SubCuenta, LibroMayor
+from .models import Transacion, CuentaDetalle, SubCuenta, PeriodoContable
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.core.paginator import Paginator
@@ -20,7 +20,6 @@ from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from django.db.models import Q
 from django.db.models.functions import Abs
-from xhtml2pdf import pisa
 from io import BytesIO
 from django.template.loader import render_to_string
 from django.http import JsonResponse
@@ -522,4 +521,6 @@ def obtener_catalogo_cuentas(request):
     cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
     return JsonResponse(cuentas_json, safe=False)
 
+def inventario(request):
+    return render(request,"App_innovaSoft/inventario.html")
 

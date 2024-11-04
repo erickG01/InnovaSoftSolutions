@@ -1,0 +1,111 @@
+{% extends 'App_innovaSoft/base.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Inventario</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Tabla de Activos no Circulantes o no Corrientes-->
+            <div class="col-md-6">
+                <h2 class="text-center">Activos No Circulantes</h2>
+                <table class="table table-striped table-bordered mt-4">
+                    <thead class="thread-dark" style="background-color:rgb(44, 39, 49); color: white;">
+                        <tr>
+                            <th>Nombre</th>                   
+                            <th>Debe</th>
+                            <th>Haber</th>
+                            <th>Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Licencia A</td>
+                            <td>200.00</td>
+                            <td>300.00</td>
+                            <td>400.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabla de Activos Circulantes o Corrientes -->
+            <div class="col-md-6">
+                <h2 class="text-center">Activos Circulantes</h2>
+                <table class="table table-striped table-bordered mt-4">
+                    <thead class="thread-dark" style="background-color:rgb(44, 39, 49); color: white;">
+                        <tr>
+                            <th>Nombre</th>                   
+                            <th>Precio de Venta</th>
+                            <th>Costo</th>
+                            <th>Cantidad</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Licencia A</td>
+                            <td>400.00</td>
+                            <td>500.00</td>
+                            <td>30</td>
+                            <td>750.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla de Totales -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h2 class="text-center">Totales</h2>
+                <table class="table table-bordered mt-4">
+                    <thead>
+                        <tr style="background-color:rgb(44, 39, 49); color: white;">
+                            <th>Cuenta</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Compras Totales</td>
+                            <td>2000.00</td>
+                        </tr>
+                        <tr>
+                            <td>Compras Netas</td>
+                            <td>1800.00</td>
+                        </tr>
+                        <tr>
+                            <td>Ventas Totales</td>
+                            <td>2500.00</td>
+                        </tr>
+                        <tr>
+                            <td>Mercancías Disponibles</td>
+                            <td>4300.00</td>
+                        </tr>
+                        <tr>
+                            <td>Costo de Venta</td>
+                            <td>2200.00</td>
+                        </tr>
+                        <tr>
+                            <td>Pérdida o Ganancia</td>
+                            <td>600.00</td>
+                        </tr>
+                    </tbody>
+                  </table>
+                <button type="button" class="btn btn-outline-success">Calcular</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+{% endblock %}
