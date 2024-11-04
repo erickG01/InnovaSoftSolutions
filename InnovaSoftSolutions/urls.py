@@ -21,8 +21,14 @@ from App_innovaSoft import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('inicio/',views.home,name="inicio"),
-    path('LibroMayor/',views.libroMayor,name="libroMayor"),
-    path('CatalogoCuentas/',views.CatalogoCuentas,name="CatalogoCuentas"),
+
+    path('LibroMayor/',views.libro_mayor_view,name="libroMayor"),
+    path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
+    path('', views.home, name='home'),  # Ruta para la raíz
+    path('Costos/',views.Costos,name="costos"),
+    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
+    path('transacciones/', views.transaccion_view, name='transaccion'),  # Transacciones
+    #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
     path('transaccion/',views.transaccion,name="transaccion"),
     path('agregar/',views.guardar_transaccion, name='agregar_transaccion'),
@@ -30,8 +36,7 @@ urlpatterns = [
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
     path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
-    path('transaccion/',views.transaccion,name="transaccion"),
-    path('inventario/',views.inventario,name='inventario'),
-   
+    path('save_transactions/', views.save_transactions, name='save_transactions'),
+    path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
 ]
 
