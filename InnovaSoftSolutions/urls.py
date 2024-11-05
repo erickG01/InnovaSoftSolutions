@@ -30,9 +30,14 @@ urlpatterns = [
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
      path('balanceGeneral/',views.balanceGeneral,name="balanceGeneral"),
     path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
+    path('transacciones/', views.transaccion_view, name='transaccion'),  # Transacciones
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
     path('logout/', views.logout,name="logout"),
-    path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion")
+    path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
+    path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
+    path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
+    path('save_transactions/', views.save_transactions, name='save_transactions'),
+    path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
 ]
 
