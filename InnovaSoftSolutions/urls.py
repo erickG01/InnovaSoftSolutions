@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from App_innovaSoft import views 
+from App_innovaSoft.views import get_rubros, get_cuentas_mayor
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,6 +25,9 @@ urlpatterns = [
 
     path('LibroMayor/',views.libro_mayor_view,name="libroMayor"),
     path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
+    path('nuevaCuenta/', views.nuevaCuenta, name="nuevaCuenta"),
+    path('get_rubros/<int:tipo_id>/', get_rubros, name='get_rubros'),
+    path('get_cuentas_mayor/<int:rubro_id>/', get_cuentas_mayor, name='get_cuentas_mayor'),
     path('', views.home, name='home'),  # Ruta para la raíz
     path('Costos/',views.Costos,name="costos"),
     path('HojAjustes/',views.hojAjustes,name="hojAjustes"),

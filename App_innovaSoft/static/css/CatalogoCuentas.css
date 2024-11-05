@@ -53,13 +53,7 @@ body {
 
 
 
-/* Espaciado adicional en las celdas */
-.table th, .table td {
-    padding: 12px 15px; /* Espaciado interno en celdas */
-}
 
-/* Estilo de las columnas */
-.table th {
-    text-align: left; /* Alinear texto a la izquierda */
-}
+
+
 

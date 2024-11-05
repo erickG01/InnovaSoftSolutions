@@ -1,0 +1,188 @@
+{% extends 'App_innovaSoft/base.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Cuenta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/CatalogoCuentas.css' %}"> 
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card shadow">
+            <div class="card-header text-center bg-dark text-white">
+                <h2>Agregar Cuentas</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'nuevaCuenta' %}">
+                    {% csrf_token %}
+    
+                    <!-- Fila 1: Tipo de Cuenta, Rubro y Cuenta Mayor -->
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-group">
+                                <label for="tipoCuenta">Tipo de Cuenta</label>
+                                <select id="tipoCuenta" name="tipo_cuenta" class="form-select w-100">
+                                    <option value="">Seleccione un Tipo de Cuenta</option>
+                                    {% for tipo in tipos_cuenta %}
+                                        <option value="{{ tipo.idGrupoCuenta }}">{{ tipo.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-group">
+                                <label for="rubro">Rubro</label>
+                                <select id="rubro" name="rubro" class="form-select w-100">
+                                    <option value="">Seleccione un Rubro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-group">
+                                <label for="cuentaMayor">Cuenta Mayor</label>
+                                <select id="cuentaMayor" name="cuentaMayor" class="form-select w-100">
+                                    <option value="">Seleccione una Cuenta Mayor</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Subcuenta y Cuenta Detalle -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label for="subcuenta">Subcuenta (6 dígitos)</label>
+                                <input type="text" id="subcuenta" name="subcuenta" class="form-control" placeholder="SUBCUENTA" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label for="cuentaDetalle">Cuenta Detalle (8 dígitos)</label>
+                                <input type="text" id="cuentaDetalle" name="cuentaDetalle" class="form-control" placeholder="CUENTA DETALLE" disabled>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <!-- Nueva sección para crear Cuenta Detalle desde Subcuenta existente -->
+                    <div class="mt-4">
+                        <h5>Crear Cuenta Detalle desde Subcuenta existente</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="subcuentaExistente">Seleccionar Subcuenta Existente</label>
+                                    <select id="subcuentaExistente" name="subcuentaExistente" class="form-select w-100">
+                                        <option value="">Seleccione una Subcuenta</option>
+                                        {% for subcuenta in subcuentas %}
+                                            <option value="{{ subcuenta.idSubCuenta }}">{{ subcuenta.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="cuentaDetalle2">Nombre de Cuenta Detalle</label>
+                                    <input type="text" id="cuentaDetalle2" name="cuentaDetalle2" class="form-control" placeholder="Nombre de la Cuenta Detalle">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <!-- Fila 3: Botones -->
+                    <div class="row mt-4 text-center">
+                        <div class="col-md-6 mb-2">
+                            <button type="submit" class="btn btn-success btn-lg w-100">Nueva Cuenta</button>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <a href="{% url 'CatalogoCuentas' %}" class="btn btn-danger btn-lg w-100">Cancelar</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const subcuentaInput = document.getElementById('subcuenta');
+            const cuentaDetalleInput = document.getElementById('cuentaDetalle');
+            const subcuentaExistenteSelect = document.getElementById('subcuentaExistente');
+            const cuentaDetalle2Input = document.getElementById('cuentaDetalle2');
+
+            // Función para manejar el campo "Subcuenta"
+            subcuentaInput.addEventListener('input', function() {
+                const isSubcuentaFilled = subcuentaInput.value.length > 0;
+                cuentaDetalleInput.disabled = !isSubcuentaFilled;
+
+                // Desactiva la segunda sección si "Subcuenta" tiene texto
+                subcuentaExistenteSelect.disabled = isSubcuentaFilled;
+                cuentaDetalle2Input.disabled = isSubcuentaFilled || !subcuentaExistenteSelect.value;
+            });
+
+            // Función para manejar la selección de "Subcuenta Existente"
+            subcuentaExistenteSelect.addEventListener('change', function() {
+                const isSubcuentaSelected = subcuentaExistenteSelect.value !== "";
+                cuentaDetalle2Input.disabled = !isSubcuentaSelected;
+
+                // Desactiva la primera sección si "Subcuenta Existente" está seleccionada
+                subcuentaInput.disabled = isSubcuentaSelected;
+                cuentaDetalleInput.disabled = isSubcuentaSelected || !subcuentaInput.value;
+            });
+
+            // Reinicia el formulario para evitar bloqueo al cargar la página
+            subcuentaInput.disabled = false;
+            subcuentaExistenteSelect.disabled = false;
+            cuentaDetalleInput.disabled = true;
+            cuentaDetalle2Input.disabled = true;
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipoCuentaSelect = document.getElementById('tipoCuenta');
+            const rubroSelect = document.getElementById('rubro');
+            const cuentaMayorSelect = document.getElementById('cuentaMayor');             
+
+            tipoCuentaSelect.addEventListener('change', function() {
+            const tipoId = this.value;
+            fetch(`/get_rubros/${tipoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                 rubroSelect.innerHTML = '<option value="">Seleccione un Rubro</option>'; // Opción por defecto
+                data.forEach(rubro => {
+                rubroSelect.innerHTML += `<option value="${rubro.idRubro}">${rubro.nombre}</option>`;
+                });
+                cuentaMayorSelect.innerHTML = '<option value="">Seleccione una Cuenta Mayor</option>'; // Reset Cuenta Mayor
+                });
+                });
+
+        rubroSelect.addEventListener('change', function() {
+            const rubroId = this.value;
+            fetch(`/get_cuentas_mayor/${rubroId}/`)
+            .then(response => response.json())
+            .then(data => {
+            cuentaMayorSelect.innerHTML = '<option value="">Seleccione una Cuenta Mayor</option>';
+            data.forEach(cuenta => {
+            cuentaMayorSelect.innerHTML += `<option value="${cuenta.idDeMayor}">${cuenta.nombre}</option>`;
+            });
+            });
+            });
+        });
+
+    </script>
+    
+{% endblock %}    
+</body>
+    
+    
+</html>
