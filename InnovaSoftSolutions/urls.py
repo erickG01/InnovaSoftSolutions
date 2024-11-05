@@ -36,5 +36,8 @@ urlpatterns = [
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
     path('save_transactions/', views.save_transactions, name='save_transactions'),
     path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
+     path('inventario/',views.mostrar_activos,name='inventario'),
+    path('obtener_transacciones/', views.obtener_transacciones, name='obtener_transacciones'),
+    path('calcular-totales/', views.calcular_totales, name='calcular_totales'),
 ]
 
