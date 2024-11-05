@@ -19,6 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from django.db import transaction
 
+
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
@@ -590,6 +591,106 @@ def obtener_catalogo_cuentas(request):
     cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
     return JsonResponse(cuentas_json, safe=False)
 
-def inventario(request):
-    return render(request,"App_innovaSoft/inventario.html")
 
+
+
+
+
+
+
+#inventario
+def mostrar_activos(request):
+    subcuentas_circulantes = SubCuenta.objects.filter(idDeMayor__idRubro__nombre='ACTIVO CORRIENTE').values('idSubCuenta', 'nombre')
+    subcuentas_no_corrientes = SubCuenta.objects.filter(idDeMayor__idRubro__nombre='ACTIVO NO CORRIENTE').values('idSubCuenta', 'nombre')
+    
+    # Imprimir los datos para verificar en la consola
+    print("Subcuentas Circulantes:", subcuentas_circulantes)
+    print("Subcuentas No Corrientes:", subcuentas_no_corrientes)
+    
+    context = {
+        'subcuentas_circulantes': subcuentas_circulantes,
+        'subcuentas_no_corrientes': subcuentas_no_corrientes,
+    }
+    
+    return render(request, 'App_innovaSoft/inventario.html', context)
+
+#mostrar en tabla las transacciones de cada cuenta 
+def obtener_transacciones(request):
+    id_subcuenta = request.GET.get('idSubCuenta')
+    
+    if id_subcuenta:
+        transacciones = Transacion.objects.filter(idSubCuenta_id=id_subcuenta).values('idSubCuenta__nombre', 'debe', 'haber')
+        
+        transacciones_list = []
+        saldo = 0
+
+        for transaccion in transacciones:
+            saldo += transaccion['debe'] - transaccion['haber']
+            transacciones_list.append({
+                'nombre': transaccion['idSubCuenta__nombre'],
+                'debe': float(transaccion['debe']),
+                'haber': float(transaccion['haber']),
+                'saldo': saldo
+            })
+
+        return JsonResponse({'transacciones': transacciones_list})
+    else:
+        return JsonResponse({'error': 'No se ha seleccionado una cuenta válida.'})
+
+
+
+#calcular totales
+def calcular_totales(request):
+    # Inicializar los valores
+    compras_totales = 0
+    compras_netas = 0
+    ventas_totales = 0
+    ventas_netas = 0
+    mercancias_disponibles = 0
+    costo_ventas = 0
+    perdidas_ganancia = 0
+
+    # Definir códigos de cuenta para filtrar
+    codigo_compras = "4102.09"
+    codigo_gasto_compra = "4102.09.03"
+    codigo_rebajas_compra = "4102.09.02"
+    codigo_ventas = "5101.01"
+    codigo_rebajas_venta = "5101.02"
+    codigo_inventario_inicial = "1104.01"
+    inventario_final = 1500  # Valor fijo dado
+
+    # Obtener todas las transacciones
+    transacciones = Transacion.objects.all()
+
+    # Realizar cálculos basados en los códigos de cuenta
+    for trans in transacciones:
+        if trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_compras:
+            compras_totales += trans.debe - trans.haber
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_gasto_compra:
+            compras_totales += trans.debe - trans.haber
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_rebajas_compra:
+            compras_netas -= trans.debe - trans.haber
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_ventas:
+            ventas_totales += trans.haber - trans.debe
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_rebajas_venta:
+            ventas_netas -= trans.haber - trans.debe
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_inventario_inicial:
+            mercancias_disponibles += trans.debe - trans.haber
+
+    # Finalizar cálculos
+    compras_netas = compras_totales + compras_netas
+    ventas_netas = ventas_totales + ventas_netas
+    mercancias_disponibles += compras_netas
+    costo_ventas = mercancias_disponibles - inventario_final
+    perdidas_ganancia = ventas_netas - costo_ventas
+
+    # Asegurar que los valores enviados sean numéricos
+    return JsonResponse({
+        'compras_totales': float(compras_totales or 0),
+        'compras_netas': float(compras_netas or 0),
+        'ventas_totales': float(ventas_totales or 0),
+        'ventas_netas': float(ventas_netas or 0),
+        'mercancias_disponibles': float(mercancias_disponibles or 0),
+        'costo_ventas': float(costo_ventas or 0),
+        'perdidas_ganancia': float(perdidas_ganancia or 0)
+    })

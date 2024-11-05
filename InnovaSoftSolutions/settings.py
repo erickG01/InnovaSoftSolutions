@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'InnovaSoftSolutions.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME':'InnovaSoft',
+        'NAME':'innovaSoft',
         'USER':'postgres',
         'PASSWORD':'admin',
         'HOST':'localhost',

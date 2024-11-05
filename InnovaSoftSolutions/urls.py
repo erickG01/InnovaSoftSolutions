@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from App_innovaSoft import views 
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('inicio/',views.home,name="inicio"),
@@ -31,12 +32,17 @@ urlpatterns = [
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
     path('transaccion/',views.transaccion,name="transaccion"),
-    path('agregar/',views.guardar_transaccion, name='agregar_transaccion'),
     path('logout/', views.logout,name="logout"),
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
     path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
     path('save_transactions/', views.save_transactions, name='save_transactions'),
     path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
+    path('inventario/',views.mostrar_activos,name='inventario'),
+    path('obtener_transacciones/', views.obtener_transacciones, name='obtener_transacciones'),
+    path('calcular-totales/', views.calcular_totales, name='calcular_totales'),
+   
+
 ]
+
 

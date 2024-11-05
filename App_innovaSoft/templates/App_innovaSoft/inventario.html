@@ -8,14 +8,26 @@
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <title>Inventario</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <!-- Incluye jQuery primero -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Luego incluye Bootstrap -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
     <div class="container mt-5">
         <div class="row">
-            <!-- Tabla de Activos no Circulantes o no Corrientes-->
+            <!-- Tabla de Activos no Circulantes o no Corrientes -->
             <div class="col-md-6">
                 <h2 class="text-center">Activos No Circulantes</h2>
+                <label for="activos-no-corrientes">Activos No Corrientes:</label>
+                <select id="activos-no-corrientes" name="activos_no_corrientes">
+                    <option value="">Seleccione un activo no corriente</option>
+                    {% for subcuenta in subcuentas_no_corrientes %}
+                        <option value="{{ subcuenta.idSubCuenta }}">{{ subcuenta.nombre }}</option>
+                    {% endfor %}
+                </select>
+              
                 <table class="table table-striped table-bordered mt-4">
                     <thead class="thread-dark" style="background-color:rgb(44, 39, 49); color: white;">
                         <tr>
@@ -25,39 +37,31 @@
                             <th>Saldo</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Licencia A</td>
-                            <td>200.00</td>
-                            <td>300.00</td>
-                            <td>400.00</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="transaccionesActivosNoCirculantes"></tbody>
                 </table>
             </div>
 
             <!-- Tabla de Activos Circulantes o Corrientes -->
             <div class="col-md-6">
                 <h2 class="text-center">Activos Circulantes</h2>
+                <label for="activos-circulantes">Activos Corrientes:</label>
+                <select id="activos-circulantes" name="activos_circulantes">
+                    <option value="">Seleccione un activo corriente</option>
+                    {% for subcuenta in subcuentas_circulantes %}
+                        <option value="{{ subcuenta.idSubCuenta }}">{{ subcuenta.nombre }}</option>
+                    {% endfor %}
+                </select>
+
                 <table class="table table-striped table-bordered mt-4">
                     <thead class="thread-dark" style="background-color:rgb(44, 39, 49); color: white;">
                         <tr>
                             <th>Nombre</th>                   
-                            <th>Precio de Venta</th>
-                            <th>Costo</th>
-                            <th>Cantidad</th>
-                            <th>Total</th>
+                            <th>Debe</th>
+                            <th>Haber</th>
+                            <th>Saldo</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Licencia A</td>
-                            <td>400.00</td>
-                            <td>500.00</td>
-                            <td>30</td>
-                            <td>750.00</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="transaccionesActivosCirculantes"></tbody>
                 </table>
             </div>
         </div>
@@ -66,46 +70,153 @@
         <div class="row mt-5">
             <div class="col-md-12">
                 <h2 class="text-center">Totales</h2>
-                <table class="table table-bordered mt-4">
+                <table class="table table-bordered mt-4" id="totales">
                     <thead>
                         <tr style="background-color:rgb(44, 39, 49); color: white;">
-                            <th>Cuenta</th>
+                            <th>Concepto</th>
                             <th>Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Compras Totales</td>
-                            <td>2000.00</td>
+                            <td id="compras-totales">0.00</td>
                         </tr>
                         <tr>
                             <td>Compras Netas</td>
-                            <td>1800.00</td>
+                            <td id="compras-netas">0.00</td>
                         </tr>
                         <tr>
                             <td>Ventas Totales</td>
-                            <td>2500.00</td>
+                            <td id="ventas-totales">0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Ventas Netas</td>
+                            <td id="ventas-netas">0.00</td>
                         </tr>
                         <tr>
                             <td>Mercancías Disponibles</td>
-                            <td>4300.00</td>
+                            <td id="mercancias-disponibles">0.00</td>
                         </tr>
                         <tr>
-                            <td>Costo de Venta</td>
-                            <td>2200.00</td>
+                            <td>Costo de Ventas</td>
+                            <td id="costo-ventas">0.00</td>
                         </tr>
                         <tr>
-                            <td>Pérdida o Ganancia</td>
-                            <td>600.00</td>
+                            <td>Pérdidas o Ganancia</td>
+                            <td id="perdidas-ganancia">0.00</td>
                         </tr>
                     </tbody>
-                  </table>
-                <button type="button" class="btn btn-outline-success">Calcular</button>
+                </table>
             </div>
+            <button class="btn btn-primary" onclick="calcularTotales()">Calcular Totales</button>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+   
+     <!-- Incluye jQuery primero -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Luego incluye Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        //calcular totales
+        function calcularTotales() {
+    fetch('/calcular-totales/')
+        .then(response => response.json())
+        .then(data => {
+            // Imprimir la respuesta recibida para depuración
+            console.log("Datos recibidos:", data);
+
+            document.getElementById("compras-totales").textContent = (parseFloat(data.compras_totales) || 0).toFixed(2);
+            document.getElementById("compras-netas").textContent = (parseFloat(data.compras_netas) || 0).toFixed(2);
+            document.getElementById("ventas-totales").textContent = (parseFloat(data.ventas_totales) || 0).toFixed(2);
+            document.getElementById("ventas-netas").textContent = (parseFloat(data.ventas_netas) || 0).toFixed(2);
+            document.getElementById("mercancias-disponibles").textContent = (parseFloat(data.mercancias_disponibles) || 0).toFixed(2);
+            document.getElementById("costo-ventas").textContent = (parseFloat(data.costo_ventas) || 0).toFixed(2);
+            document.getElementById("perdidas-ganancia").textContent = (parseFloat(data.perdidas_ganancia) || 0).toFixed(2);
+        })
+        .catch(error => console.error('Error al calcular los totales:', error));
+}
+
+
+        $(document).ready(function() {    
+            // Función para manejar el cambio en el select de activos no corrientes
+            $('#activos-no-corrientes').change(function() {
+                let idSubCuenta = $(this).val();
+        
+                // Realiza una solicitud AJAX para obtener transacciones
+                $.ajax({
+                    url: '{% url "obtener_transacciones" %}',
+                    data: { 'idSubCuenta': idSubCuenta },
+                    dataType: 'json',
+                    success: function(response) {
+                        let transacciones = response.transacciones;
+                        let tbody = '';
+        
+                        if (transacciones.length > 0) {
+                            transacciones.forEach(transaccion => {
+                                tbody += `
+                                    <tr>
+                                        <td>${transaccion.nombre}</td>
+                                        <td>${transaccion.debe}</td>
+                                        <td>${transaccion.haber}</td>
+                                        <td>${transaccion.saldo}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            tbody = '<tr><td colspan="4">No hay transacciones para esta cuenta.</td></tr>';
+                        }
+        
+                        $('#transaccionesActivosNoCirculantes').html(tbody);
+                    },
+                    error: function(error) {
+                        console.log("Error en la solicitud de transacciones:", error);
+                    }
+                });
+            });
+
+              
+            // Función para manejar el cambio en el select de activos circulantes
+            $('#activos-circulantes').change(function() {
+                let idSubCuenta = $(this).val();
+        
+                $.ajax({
+                    url: '{% url "obtener_transacciones" %}',
+                    data: { 'idSubCuenta': idSubCuenta },
+                    dataType: 'json',
+                    success: function(response) {
+                        let transacciones = response.transacciones;
+                        let tbody = '';
+        
+                        if (transacciones.length > 0) {
+                            transacciones.forEach(transaccion => {
+                                tbody += `
+                                    <tr>
+                                        <td>${transaccion.nombre}</td>
+                                        <td>${transaccion.debe}</td>
+                                        <td>${transaccion.haber}</td>
+                                        <td>${transaccion.saldo}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            tbody = '<tr><td colspan="4">No hay transacciones para esta cuenta.</td></tr>';
+                        }
+        
+                        $('#transaccionesActivosCirculantes').html(tbody);
+                    },
+                    error: function(error) {
+                        console.log("Error en la solicitud:", error);
+                    }
+                });
+            });
+        });        
+
+    </script>
 </body>
 </html>
 {% endblock %}
