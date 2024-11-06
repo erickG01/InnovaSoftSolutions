@@ -50,6 +50,7 @@ urlpatterns = [
     path('nuevaCuenta/', views.nuevaCuenta, name="nuevaCuenta"),
     path('get_rubros/<int:tipo_id>/', get_rubros, name='get_rubros'),
     path('get_cuentas_mayor/<int:rubro_id>/', get_cuentas_mayor, name='get_cuentas_mayor'),
+    
 
 ]
 

@@ -30,6 +30,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.db.models import Max
 from itertools import zip_longest
+from decimal import Decimal, ROUND_HALF_UP
 
 # Create your views here.
 def home(request):
@@ -295,22 +296,21 @@ def balanceGeneral(request):
     subcuentas_pasivo_no_corriente = SubCuenta.objects.filter(idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_pasivo_no_corriente])
     cuentas_detalle_pasivo_no_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_pasivo_no_corriente])
 
-    #Recuperando el resultado del estado de capital
+    # Recuperando el resultado del estado de capital y redondeándolo a dos decimales
     capitales_iniciales = request.session.get('capitales_iniciales', 0)
-    # Convertir capitales_iniciales a Decimal
-    capitales_iniciales = Decimal(capitales_iniciales)
+    capitales_iniciales = Decimal(capitales_iniciales).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
 
     # Calcular sumas de saldos para activos y pasivo + capital
-    total_activos = sum(transaccion['saldo_absoluto'] for transaccion in transacciones_activo_corriente) + \
+    total_activos = Decimal(sum(transaccion['saldo_absoluto'] for transaccion in transacciones_activo_corriente) + \
                 sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_activo_corriente) + \
                 sum(transaccion['saldo_absoluto'] for transaccion in transacciones_activo_no_corriente) + \
-                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_activo_no_corriente)
+                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_activo_no_corriente)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
 
-    total_pasivo_capital = sum(transaccion['saldo_absoluto'] for transaccion in transacciones_pasivo_corriente) + \
+    total_pasivo_capital = Decimal(sum(transaccion['saldo_absoluto'] for transaccion in transacciones_pasivo_corriente) + \
                        sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_pasivo_corriente) + \
                        sum(transaccion['saldo_absoluto'] for transaccion in transacciones_pasivo_no_corriente) + \
                        sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_pasivo_no_corriente) + \
-                       capitales_iniciales
+                       capitales_iniciales).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
     
     
     # Obtener la información de la empresa y las fechas del periodo
@@ -813,7 +813,7 @@ def generar_estado_de_resultados(request):
     # Impuesto y Utilidad Neta
     tasa_impuesto = Decimal(0.15)
     impuesto = utilidad_antes_impuesto * tasa_impuesto
-    utilidad_neta = utilidad_antes_impuesto - impuesto
+    utilidad_neta = utilidad_antes_impuesto 
     registrar_utilidad_neta_y_perdidas(utilidad_neta)
     datos.append(["", "Impuesto (15%)", f"{impuesto:.2f}"])
     datos.append(["", "Utilidad Neta", f"{utilidad_neta:.2f}"])
