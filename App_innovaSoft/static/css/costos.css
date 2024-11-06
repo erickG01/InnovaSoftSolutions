@@ -1,32 +1,71 @@
-.tabla{
-    width:35%;
-    margin-left:3rem;
-    margin-top:1rem;
-    position:absolute;
-}
 .costos_txt{
-    margin-top:3rem;
-    margin-left:3rem;
+    margin-top: 3rem;
+    margin-left: 3rem;
+    font-size: 24px;
+    font-weight: bold;
 }
-.contenedor{
-    margin-left:-16rem;
-
+.tabla{
+    width: 35%;
+    margin: 1rem 0 1rem 3rem;
+    border-collapse: collapse;
 }
-.costoTotales{
-position: absolute;
-margin-left:50rem;
-margin-top:-2rem;
+.tabla th, .tabla td {
+    padding: 12px;
+    text-align: left;
+}
+.tabla th {
+    background-color: #343a40;
+    color: white;
 }
 .tablaCosto{
-    width:48rem;
-    margin-left:-5rem;
+    width: 100%;
+    max-width: 48rem;  /* Limita el tamaño máximo */
+    margin: 2rem auto; /* Centra la tabla */
+    border-collapse: collapse;
+}
+.tablaCosto th, .tablaCosto td {
+    padding: 12px;
+    text-align: left;
+}
+.tablaCosto th {
+    background-color: #343a40;
+    color: white;
+}
+.tablaCosto td {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+}
+.btn_orden, .btnCalcular {
+    margin-top: 1rem;
 }
 .btn_orden{
-position: absolute;
-margin-left: 35rem;
-margin-top:-3rem;
+    margin-left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
 }
 .btnCalcular{
-    position: absolute;
-    margin-left:-5rem;
+    margin-left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+}
+.costoTotales{
+    margin: 2rem auto;
+    text-align: center;
+}
+.modal-dialog {
+    max-width: 500px;
+    margin: 1.75rem auto;
+}
+@media (max-width: 768px) {
+    .tabla {
+        width: 100%;
+        margin-left: 0;
+    }
+    .costoTotales {
+        margin-top: 2rem;
+    }
+    .btn_orden, .btnCalcular {
+        width: 100%;
+        margin-left: 0;
+    }
 }
