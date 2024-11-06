@@ -17,6 +17,7 @@ Incluyendo otra configuración de URL:
 from django.contrib import admin
 from django.urls import path
 from App_innovaSoft import views 
+from App_innovaSoft.views import get_rubros, get_cuentas_mayor
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,14 +27,22 @@ urlpatterns = [
     path('inicio/',views.home,name="inicio"),
 
     path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
+    path('nuevaCuenta/', views.nuevaCuenta, name="nuevaCuenta"),
     path('Costos/',views.Costos,name="costos"),
+    path('costos/', views.calcular_costos_indirectos, name='costos'),
     path('LibroMayor/',views.libro_mayor_view,name="libroMayor"),
     path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
     path('BalanceDeComprobacion',views.generar_balance_de_comprobacion,name="BalanceDeComprobacion"),
     path('EstadoDeResultados',views.generar_estado_de_resultados,name='EstadoDeResultados'),
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
     path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
+    path('balanceGeneral/',views.balanceGeneral,name="balanceGeneral"),
     path('transacciones/', views.transaccion_view, name='transaccion'),  # Transacciones
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
-    path('save_transactions/', views.save_transactions, name='save_transactions'),    
+    path('save_transactions/', views.save_transactions, name='save_transactions'),
+    path('obtener_transacciones/', views.obtener_transacciones, name='obtener_transacciones'),
+    path('calcular-totales/', views.calcular_totales, name='calcular_totales'),
+    path('inventario/',views.mostrar_activos,name='inventario'),
+    path('get_rubros/<int:tipo_id>/', get_rubros, name='get_rubros'),
+    path('get_cuentas_mayor/<int:rubro_id>/', get_cuentas_mayor, name='get_cuentas_mayor'),
 ]
