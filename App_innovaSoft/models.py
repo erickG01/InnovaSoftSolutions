@@ -15,10 +15,10 @@ class Departamento(models.Model):
 #Prestaciones
 class Prestaciones(models.Model):
         idPrestaciones=models.AutoField(primary_key=True,null=False)
-        tasaSeguro=models.DecimalField(max_digits=4,decimal_places=4,null=False)
-        tasaAFP=models.DecimalField(max_digits=4,decimal_places=4,null=False)
-        tasaIncaf=models.DecimalField(max_digits=4,decimal_places=3,null=False)
-        recargoPorVacaciones=models.DecimalField(max_digits=4,decimal_places=3,null=False)
+        tasaSeguro = models.DecimalField(max_digits=5, decimal_places=4, null=False) 
+        tasaAFP = models.DecimalField(max_digits=5, decimal_places=4, null=False)     
+        tasaIncaf = models.DecimalField(max_digits=3, decimal_places=2, null=False)   
+        recargoPorVacaciones = models.DecimalField(max_digits=4, decimal_places=2, null=False)  
         
         def __str__(self):
             return self.nombre
@@ -66,6 +66,9 @@ class OrdenTrabajo(models.Model):
       fechaInico=models.DateField()
       fechaFin=models.DateField()
       personal=models.TextField()
+      materiaPrima=models.TextField()
+      costoManoDeObra=models.DecimalField(max_digits=10,decimal_places=2)
+      costoMateriaPrima=models.DecimalField(max_digits=10,decimal_places=2)
       
       def __str__(self):
             return self.nombre
@@ -176,8 +179,6 @@ class PeriodoContable(models.Model):
             db_table='periodoContable'
             ordering=['idPeriodo']
 
-
-
 #Informacion General
 class Informacion(models.Model):
       id=models.AutoField(primary_key=True)
@@ -255,4 +256,10 @@ class EstadoDeResultados(models.Model):
             return self.nombre
       class Meta:
             db_table='estadoDeResultados'
-            ordering=['idEstadoDeResultados']     
+            ordering=['idEstadoDeResultados']   
+class Producto(models.Model):
+      idProducto=models.AutoField(primary_key=True)
+      idSubCuenta=models.ForeignKey(SubCuenta,on_delete=models.CASCADE)
+      nombre=models.CharField(max_length=256,unique=True)
+      precio=models.DecimalField(max_digits=10, decimal_places=2)
+      costo=models.DecimalField(max_digits=10,decimal_places=2,null=True)

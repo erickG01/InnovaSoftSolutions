@@ -1,39 +1,33 @@
-from django.shortcuts import render
+from decimal import Decimal
+import json
+
 from django.shortcuts import render
 from django.shortcuts import render,redirect
-from django.shortcuts import render,  redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate
 from django.contrib.auth import authenticate, login as auth_login
 from django.core.paginator import Paginator
-from django.http import HttpResponse
-from django.http import JsonResponse
-from django.db.models import Sum, F
-from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
+from django.db import transaction
+from django.db.models import Sum, F,Q
 from django.db.models.functions import Abs
 from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph,Spacer
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.lib.pagesizes import letter
 from xhtml2pdf import pisa
 
 from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
 
-from decimal import Decimal
-from io import BytesIO
-import json
-
 # Crea tus vistas aquí.
 def home(request):
-    return render(request,"App_innovaSoft/inicio.html")                 # Renderiza la plantilla de inicio
+    return render(request,"App_innovaSoft/inicio.html")
 
 def libroMayor(request):
-    return render(request,"App_innovaSoft/libroMayor.html")             # Renderiza la plantilla del Libro Mayor
+    return render(request,"App_innovaSoft/libroMayor.html")
 
 def Costos(request):
     return render(request,"App_innovaSoft/costos.html")
@@ -50,6 +44,20 @@ def estadoFinancieros(request):
 #Vistas CatalogoCuentas
 def transaccion(request):
     return render(request,"App_innovaSoft/transaccion.html")
+
+# Vistas CatalogoCuentas
+def transaccion(request):
+    CatalogoCuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
+    return render(request, 'App_innovaSoft/transaccion.html', {'CatalogoCuentas': CatalogoCuentas})
+
+def transaccion_view(request):
+    # Obtener todas las subcuentas y sus cuentas de detalle
+    subcuentas = SubCuenta.objects.prefetch_related('detalles').all()
+
+    context = {
+        'subcuentas_filtradas': subcuentas
+    }
+    return render(request, 'App_innovaSoft/transaccion.html', context)
 
 # Vistas CatalogoCuentas
 def obtener_catalogo_cuentas(request):
@@ -118,7 +126,7 @@ def login(request):
 def logout(request):
     return render (request,"App_innovaSoft/login.html")
 
-# METODO PARA VER EL LIBRO MAYOR
+#METODO PARA VER EL LIBRO MAYOR
 def libro_mayor_view(request):
     # Agrupar transacciones por cuenta
     transacciones_por_cuenta = (
@@ -143,6 +151,44 @@ def libro_mayor_view(request):
     return render(request, 'App_innovaSoft/libroMayor.html', {
         'transacciones_por_cuenta': transacciones_por_cuenta,
     })
+
+@csrf_exempt
+def save_transactions(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            transactions = data.get('transactions', [])
+            last_id = Transacion.objects.order_by('-idTransacion').first()
+            next_id = last_id.idTransacion + 1 if last_id else 1  # Start from 1 if no previous transactions
+
+            # Start atomic transaction
+            with transaction.atomic():
+                for transaction_data in transactions:
+                    cuenta_id = transaction_data['cuenta_id']
+                    cuenta_id_type = transaction_data.get('cuenta_id_type')  # This new field indicates type
+                    debe = transaction_data['debe']
+                    haber = transaction_data['haber']
+
+                    if cuenta_id_type == 'subcuenta':
+                        try:
+                            subcuenta = SubCuenta.objects.get(idSubCuenta=cuenta_id)
+                            Transacion.objects.create(idTransacion=next_id, idSubCuenta=subcuenta, debe=debe, haber=haber)
+                        except SubCuenta.DoesNotExist:
+                            continue  # Skip invalid SubCuenta
+                    elif cuenta_id_type == 'cuentadetalle':
+                        try:
+                            cuenta_detalle = CuentaDetalle.objects.get(idCuentaDetalle=cuenta_id)
+                            Transacion.objects.create(idTransacion=next_id, idCuentaDetalle=cuenta_detalle, debe=debe, haber=haber)
+                        except CuentaDetalle.DoesNotExist:
+                            continue  # Skip invalid CuentaDetalle
+
+                    next_id += 1  # Increment ID for next transaction
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            print("Error al guardar transacciones:", e)  # Log error to console
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error'}, status=400)
 
 #METODO PARA GENERAL EL BALANCE DE COMPROBACION
 def generar_balance_de_comprobacion(request):
@@ -170,7 +216,6 @@ def generar_balance_de_comprobacion(request):
         fontSize=12,
         spaceAfter=12
     )
-
     # Obtener datos de la empresa e información del período
     info_empresa = Informacion.objects.first()
     nombre_empresa = info_empresa.nombreEmpresa if info_empresa else "Nombre de Empresa No Definido"
@@ -237,7 +282,6 @@ def generar_balance_de_comprobacion(request):
         ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
     ]))
-
     elementos.append(tabla)
 
     # Construir el PDF
@@ -268,7 +312,6 @@ def generar_estado_de_resultados(request):
         fontSize=12,
         spaceAfter=12
     )
-
     info_empresa = Informacion.objects.first()
     nombre_empresa = info_empresa.nombreEmpresa if info_empresa else "Nombre de Empresa No Definido"
     periodo_contable = PeriodoContable.objects.first()
@@ -318,8 +361,7 @@ def generar_estado_de_resultados(request):
     for codigo in cuentas_gasto_operativo:
         transacciones = Transacion.objects.filter(
         Q(idCuentaDetalle__codigoCuenta=codigo) | Q(idSubCuenta__codigoCuenta=codigo)
-    )
-        
+    )     
         # Depuración intensiva
         print(f"\nCódigo: {codigo}")
         print(f"Total de transacciones encontradas: {transacciones.count()}")
@@ -358,6 +400,7 @@ def generar_estado_de_resultados(request):
     tasa_impuesto = Decimal(0.15)
     impuesto = utilidad_antes_impuesto * tasa_impuesto
     utilidad_neta = utilidad_antes_impuesto - impuesto
+    registrar_utilidad_neta(utilidad_neta)
     datos.append(["", "Impuesto (15%)", f"{impuesto:.2f}"])
     datos.append(["", "Utilidad Neta", f"{utilidad_neta:.2f}"])
 
@@ -371,7 +414,6 @@ def generar_estado_de_resultados(request):
     ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
     ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
 ]))
-
     elementos.append(tabla)
 
     doc.build(elementos)
@@ -391,6 +433,50 @@ def obtener_nombre_cuenta(codigo_cuenta):
     except CuentaDetalle.DoesNotExist:
         return ""
     
+def registrar_utilidad_neta(utilidad_neta):
+    """
+    Registra o actualiza la transacción correspondiente a la cuenta '3202.01' en la tabla Transacion.
+    Si la utilidad es positiva, se registra en el haber; si es negativa, en el debe.
+    """
+    # Convertir a valor absoluto
+    valor_abs_utilidad_neta = abs(utilidad_neta)
+
+    try:
+        # Iniciar transacción para asegurar la integridad
+        with transaction.atomic():
+            # Buscar la cuenta de detalle correspondiente
+            cuenta_utilidad = SubCuenta.objects.get(codigoCuenta="3202.01")
+
+            # Verificar si ya existe una transacción para esta cuenta
+            transaccion_existente = Transacion.objects.filter(idSubCuenta=cuenta_utilidad).first()
+
+            if transaccion_existente:
+                print("Transacción existente encontrada, actualizando valores...")
+                # Actualizar valores en caso de que exista la transacción
+                if utilidad_neta >= 0:
+                    transaccion_existente.haber = valor_abs_utilidad_neta
+                    transaccion_existente.debe = 0
+                else:
+                    transaccion_existente.debe = valor_abs_utilidad_neta
+                    transaccion_existente.haber = 0
+                transaccion_existente.save()
+            else:
+                # Crear una nueva transacción en caso de que no exista
+                print("No se encontró transacción existente. Creando una nueva...")
+                nueva_transaccion = Transacion(
+                    idTransacion=29,
+                    idSubCuenta=cuenta_utilidad,
+                    debe=valor_abs_utilidad_neta if utilidad_neta < 0 else 0,
+                    haber=valor_abs_utilidad_neta if utilidad_neta >= 0 else 0,
+                )
+                nueva_transaccion.save()
+                print("Nueva transacción creada exitosamente.")
+
+    except CuentaDetalle.DoesNotExist:
+        print("Error: No se encontró la cuenta con el código '3202.01'.")
+    except Exception as e:
+        print(f"Ocurrió un error al registrar la utilidad neta: {e}")
+
 def estadoCapital(request):
     subcuenta_codigos = ['3202.01', '4202.01', '1103.01']
     cuenta_detalle_codigos = ['3101.01.01', '3101.02.01']
@@ -411,11 +497,9 @@ def estadoCapital(request):
     subcuenta_transacciones = Transacion.objects.filter(idSubCuenta__in=subcuentas).values('idSubCuenta').annotate(
         saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
     )
-
     cuenta_detalle_transacciones = Transacion.objects.filter(idCuentaDetalle__in=detalle_cuentas).values('idCuentaDetalle').annotate(
         saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
     )
-
     cuentas_data = []
     saldo_3202_01 = 0  # Inicializamos para almacenar el saldo de 3202.01
     disminuciones_total = 0
@@ -426,7 +510,6 @@ def estadoCapital(request):
             (item for item in subcuenta_transacciones if item['idSubCuenta'] == subcuenta.idSubCuenta),
             {'saldo_absoluto': 0}
         )
-
         # Clasificación de saldo según el tipo de cuenta
         if subcuenta.codigoCuenta == '1103.01':  # Disminuciones
             saldo_inicial = aumentos = 0
@@ -447,7 +530,6 @@ def estadoCapital(request):
             'aumentos': aumentos,
             'disminuciones': disminuciones
         })
-
     capitales_iniciales = 0
     # Clasificamos las cuentas de detalle de manera similar
     for cuenta_detalle in detalle_cuentas:
@@ -455,7 +537,6 @@ def estadoCapital(request):
             (item for item in cuenta_detalle_transacciones if item['idCuentaDetalle'] == cuenta_detalle.idCuentaDetalle),
             {'saldo_absoluto': 0}
         )
-
         if cuenta_detalle.codigoCuenta == '3101.01.01': 
             saldo_inicial = transaccion['saldo_absoluto']
             capitales_iniciales += saldo_inicial
@@ -471,7 +552,6 @@ def estadoCapital(request):
             'aumentos': aumentos,
             'disminuciones': disminuciones
         })
-
     # Aseguramos que el resultado final sea positivo
     total_final = saldo_3202_01 - disminuciones_total + capitales_iniciales
     total_final = abs(total_final)  # Convertimos a valor absoluto
@@ -486,7 +566,6 @@ def estadoCapital(request):
             'fecha_inicio': fecha_inicio,       # Pasamos la fecha de inicio
             'fecha_fin': fecha_fin,             # Pasamos la fecha de fin
         })
-
         # Generamos el PDF
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="estado_capital.pdf"'
@@ -500,8 +579,3 @@ def estadoCapital(request):
 
     # Si no se solicita un PDF, no se devuelve nada
     return HttpResponse('No se puede generar el PDF, por favor verifica la solicitud.')   
-
-# Vistas CatalogoCuentas
-def transaccion(request):
-    CatalogoCuentas = SubCuenta.objects.all()  # Cambia a CuentaDetalle si quieres este nivel de detalle
-    return render(request, 'App_innovaSoft/transaccion.html', {'CatalogoCuentas': CatalogoCuentas})
