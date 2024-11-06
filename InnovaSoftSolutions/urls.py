@@ -43,5 +43,13 @@ urlpatterns = [
     path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
     path('save_transactions/', views.save_transactions, name='save_transactions'),
     path('EstadoFinancieros/', views.estadoFinancieros, name="estadoFinancieros"), # Ruta para estados financieros
+     path('inventario/',views.mostrar_activos,name='inventario'),
+    path('obtener_transacciones/', views.obtener_transacciones, name='obtener_transacciones'),
+    path('calcular-totales/', views.calcular_totales, name='calcular_totales'),
+     path('balanceGeneral/',views.balanceGeneral,name="balanceGeneral"),
+    path('nuevaCuenta/', views.nuevaCuenta, name="nuevaCuenta"),
+    path('get_rubros/<int:tipo_id>/', get_rubros, name='get_rubros'),
+    path('get_cuentas_mayor/<int:rubro_id>/', get_cuentas_mayor, name='get_cuentas_mayor'),
+
 ]
 

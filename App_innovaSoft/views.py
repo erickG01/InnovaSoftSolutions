@@ -29,7 +29,7 @@ import json
 from django.db import transaction
 from django.urls import reverse
 from django.db.models import Max
-
+from itertools import zip_longest
 
 # Create your views here.
 def home(request):
@@ -279,9 +279,7 @@ def balanceGeneral(request):
         saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
     ).filter(saldo_absoluto__gt=0)
 
-   
 
-    
 
     # Filtrar subcuentas y cuentas de detalle basadas en las transacciones filtradas
     subcuentas_activo_corriente = SubCuenta.objects.filter(
@@ -523,7 +521,7 @@ def logout(request):
     return render (request,"App_innovaSoft/login.html")
 
 
-
+#METODO PARA VER EL LIBRO MAYOR
 "METODO PARA VER EL LIBRO MAYOR"
 def libro_mayor_view(request):
     # Agrupar transacciones por cuenta
@@ -550,6 +548,7 @@ def libro_mayor_view(request):
         'transacciones_por_cuenta': transacciones_por_cuenta,
     })
 
+#Guardar transacciones
 @csrf_exempt
 def save_transactions(request):
     if request.method == 'POST':
@@ -589,7 +588,7 @@ def save_transactions(request):
     return JsonResponse({'status': 'error'}, status=400)
 
 
-
+#METODO PARA VER LAS CUENTAS EN EL SELECT EN LA INTERFAZ DE TRANSACCIONES
 def transaccion_view(request):
     # Obtener todas las subcuentas y sus cuentas de detalle
     subcuentas = SubCuenta.objects.prefetch_related('detalles').all()
@@ -815,7 +814,7 @@ def generar_estado_de_resultados(request):
     tasa_impuesto = Decimal(0.15)
     impuesto = utilidad_antes_impuesto * tasa_impuesto
     utilidad_neta = utilidad_antes_impuesto - impuesto
-    registrar_utilidad_neta(utilidad_neta)
+    registrar_utilidad_neta_y_perdidas(utilidad_neta)
     datos.append(["", "Impuesto (15%)", f"{impuesto:.2f}"])
     datos.append(["", "Utilidad Neta", f"{utilidad_neta:.2f}"])
 
@@ -849,49 +848,51 @@ def obtener_nombre_cuenta(codigo_cuenta):
     except CuentaDetalle.DoesNotExist:
         return ""
     
-def registrar_utilidad_neta(utilidad_neta):
+#METODO PARA GUARDAR LA UTILIDAD DESPUES DE DESCARGAR EL ESTADO DE RESULTADOS
+def registrar_utilidad_neta_y_perdidas(utilidad_neta):
     """
-    Registra o actualiza la transacción correspondiente a la cuenta '3202.01' en la tabla Transacion.
-    Si la utilidad es positiva, se registra en el haber; si es negativa, en el debe.
+    Registra la utilidad neta en la cuenta '3202.01' (Ejercicio Presente) y la cuenta '6101.01' (Pérdidas y Ganancias).
+    Si la utilidad neta es positiva, se registra en el haber de 'Ejercicio Presente' y en el debe de 'Pérdidas y Ganancias'.
+    Si es negativa, se registra en el debe de 'Ejercicio Presente' y en el haber de 'Pérdidas y Ganancias'.
     """
-    # Convertir a valor absoluto
     valor_abs_utilidad_neta = abs(utilidad_neta)
 
     try:
-        # Iniciar transacción para asegurar la integridad
         with transaction.atomic():
-            # Buscar la cuenta de detalle correspondiente
-            cuenta_utilidad = SubCuenta.objects.get(codigoCuenta="3202.01")
+            # Buscar la última transacción en la tabla
+            ultimo_id = Transacion.objects.latest('idTransacion').idTransacion if Transacion.objects.exists() else 0
+            
+            # Buscar las cuentas de ejercicio presente y pérdidas y ganancias
+            cuenta_ejercicio_presente = SubCuenta.objects.get(codigoCuenta="3202.01")
+            cuenta_perdidas_y_ganancias = SubCuenta.objects.get(codigoCuenta="6101.01")
 
-            # Verificar si ya existe una transacción para esta cuenta
-            transaccion_existente = Transacion.objects.filter(idSubCuenta=cuenta_utilidad).first()
+            # Determinar los valores para cada cuenta
+            debe_ejercicio = valor_abs_utilidad_neta if utilidad_neta < 0 else 0
+            haber_ejercicio = valor_abs_utilidad_neta if utilidad_neta >= 0 else 0
 
-            if transaccion_existente:
-                print("Transacción existente encontrada, actualizando valores...")
-                # Actualizar valores en caso de que exista la transacción
-                if utilidad_neta >= 0:
-                    transaccion_existente.haber = valor_abs_utilidad_neta
-                    transaccion_existente.debe = 0
-                else:
-                    transaccion_existente.debe = valor_abs_utilidad_neta
-                    transaccion_existente.haber = 0
-                transaccion_existente.save()
-            else:
-                # Crear una nueva transacción en caso de que no exista
-                print("No se encontró transacción existente. Creando una nueva...")
-                nueva_transaccion = Transacion(
-                    idTransacion=29,
-                    idSubCuenta=cuenta_utilidad,
-                    debe=valor_abs_utilidad_neta if utilidad_neta < 0 else 0,
-                    haber=valor_abs_utilidad_neta if utilidad_neta >= 0 else 0,
-                )
-                nueva_transaccion.save()
-                print("Nueva transacción creada exitosamente.")
+            debe_perdidas = valor_abs_utilidad_neta if utilidad_neta >= 0 else 0
+            haber_perdidas = valor_abs_utilidad_neta if utilidad_neta < 0 else 0
 
-    except CuentaDetalle.DoesNotExist:
-        print("Error: No se encontró la cuenta con el código '3202.01'.")
+            # Crear o actualizar transacción en cuenta de ejercicio presente
+            transaccion_ejercicio, created_ejercicio = Transacion.objects.update_or_create(
+                idSubCuenta=cuenta_ejercicio_presente,
+                defaults={'debe': debe_ejercicio, 'haber': haber_ejercicio},
+                idTransacion=ultimo_id + 1
+            )
+
+            # Crear o actualizar transacción en cuenta de pérdidas y ganancias
+            transaccion_perdidas, created_perdidas = Transacion.objects.update_or_create(
+                idSubCuenta=cuenta_perdidas_y_ganancias,
+                defaults={'debe': debe_perdidas, 'haber': haber_perdidas},
+                idTransacion=ultimo_id + 2
+            )
+
+            print("Transacciones registradas o actualizadas exitosamente.")
+
+    except SubCuenta.DoesNotExist as e:
+        print(f"Error: No se encontró una cuenta necesaria: {e}")
     except Exception as e:
-        print(f"Ocurrió un error al registrar la utilidad neta: {e}")
+        print(f"Ocurrió un error al registrar las transacciones: {e}")
 
 
 
@@ -909,5 +910,105 @@ def obtener_catalogo_cuentas(request):
     CatalogoCuentas = SubCuenta.objects.all()
     cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
     return JsonResponse(cuentas_json, safe=False)
+
+
+#inventario
+def mostrar_activos(request):
+    subcuentas_circulantes = SubCuenta.objects.filter(idDeMayor__idRubro__nombre='ACTIVO CORRIENTE').values('idSubCuenta', 'nombre')
+    subcuentas_no_corrientes = SubCuenta.objects.filter(idDeMayor__idRubro__nombre='ACTIVO NO CORRIENTE').values('idSubCuenta', 'nombre')
+    
+    # Imprimir los datos para verificar en la consola
+    print("Subcuentas Circulantes:", subcuentas_circulantes)
+    print("Subcuentas No Corrientes:", subcuentas_no_corrientes)
+    
+    context = {
+        'subcuentas_circulantes': subcuentas_circulantes,
+        'subcuentas_no_corrientes': subcuentas_no_corrientes,
+    }
+    
+    return render(request, 'App_innovaSoft/inventario.html', context)
+
+#mostrar en tabla las transacciones de cada cuenta 
+def obtener_transacciones(request):
+    id_subcuenta = request.GET.get('idSubCuenta')
+    
+    if id_subcuenta:
+        transacciones = Transacion.objects.filter(idSubCuenta_id=id_subcuenta).values('idSubCuenta__nombre', 'debe', 'haber')
+        
+        transacciones_list = []
+        saldo = 0
+
+        for transaccion in transacciones:
+            saldo += transaccion['debe'] - transaccion['haber']
+            transacciones_list.append({
+                'nombre': transaccion['idSubCuenta__nombre'],
+                'debe': float(transaccion['debe']),
+                'haber': float(transaccion['haber']),
+                'saldo': saldo
+            })
+
+        return JsonResponse({'transacciones': transacciones_list})
+    else:
+        return JsonResponse({'error': 'No se ha seleccionado una cuenta válida.'})
+
+
+
+#calcular totales
+def calcular_totales(request):
+    # Inicializar los valores
+    compras_totales = 0
+    compras_netas = 0
+    ventas_totales = 0
+    ventas_netas = 0
+    mercancias_disponibles = 0
+    costo_ventas = 0
+    perdidas_ganancia = 0
+
+    # Definir códigos de cuenta para filtrar
+    codigo_compras = "4102.09"
+    codigo_gasto_compra = "4102.09.03"
+    codigo_rebajas_compra = "4102.09.02"
+    codigo_ventas = "5101.01"
+    codigo_rebajas_venta = "5101.02"
+    codigo_inventario_inicial = "1104.01"
+    inventario_final = 1500  # Valor fijo dado
+
+    # Obtener todas las transacciones
+    transacciones = Transacion.objects.all()
+
+    # Realizar cálculos basados en los códigos de cuenta
+    for trans in transacciones:
+        if trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_compras:
+            compras_totales += trans.debe - trans.haber
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_gasto_compra:
+            compras_totales += trans.debe - trans.haber
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_rebajas_compra:
+            compras_netas -= trans.debe - trans.haber
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_ventas:
+            ventas_totales += trans.haber - trans.debe
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_rebajas_venta:
+            ventas_netas -= trans.haber - trans.debe
+        elif trans.idSubCuenta and trans.idSubCuenta.codigoCuenta == codigo_inventario_inicial:
+            mercancias_disponibles += trans.debe - trans.haber
+
+    # Finalizar cálculos
+    compras_netas = compras_totales + compras_netas
+    ventas_netas = ventas_totales + ventas_netas
+    mercancias_disponibles += compras_netas
+    costo_ventas = mercancias_disponibles - inventario_final
+    perdidas_ganancia = ventas_netas - costo_ventas
+
+    # Asegurar que los valores enviados sean numéricos
+    return JsonResponse({
+        'compras_totales': float(compras_totales or 0),
+        'compras_netas': float(compras_netas or 0),
+        'ventas_totales': float(ventas_totales or 0),
+        'ventas_netas': float(ventas_netas or 0),
+        'mercancias_disponibles': float(mercancias_disponibles or 0),
+        'costo_ventas': float(costo_ventas or 0),
+        'perdidas_ganancia': float(perdidas_ganancia or 0)
+    })
+
+
 
 
