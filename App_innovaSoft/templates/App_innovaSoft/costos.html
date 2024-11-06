@@ -26,16 +26,19 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Edificio</td>
-                    <td>$200</td>
-                </tr>
-                <tr>
-                    <td>Servicio de agua</td>
-                    <td>$25.50</td>
-                </tr>
+                {% for costo in costos_indirectos %}
+                    <tr>
+                        <td>{{ costo.nombre }}</td>
+                        <td>${{ costo.saldo|floatformat:2 }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2" >No hay datos disponibles</td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
+        
 
         <div class="costoTotales">
             <h3 class="text-body-secondary">Costos totales</h3>
@@ -65,7 +68,7 @@
                     </tr>
                 </tbody>
             </table>
-            <button id="calculateTotal" class="btn btn-dark">Calcular total</button>
+            <button  class="btnCalcular btn btn-dark">Calcular total</button>
         </div>
 
         <!-- Modal -->

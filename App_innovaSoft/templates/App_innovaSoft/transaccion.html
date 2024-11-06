@@ -19,8 +19,8 @@
         <!-- Botón para guardar transacciones -->
         <button id="saveTransactions" class="btn btn-success mb-3">Guardar</button>
 
-        <!-- Tabla de transacciones -->
-        <table class="table table-bordered" id="dynamicTable">
+          <!-- Tabla de transacciones -->
+          <table class="table table-bordered" id="dynamicTable">
             <thead class="table-dark">
                 <tr>
                     <th>Cuenta</th>
@@ -35,12 +35,13 @@
                         <select class="form-control cuenta-select" name="cuenta">
                             <option value="" disabled selected>Seleccione una cuenta</option>
                             {% for subcuenta in subcuentas_filtradas %}
-                                <option value="sub_{{ subcuenta.idSubCuenta }}">{{ subcuenta.nombre }}</option>
+                                <option value="subcuenta:{{ subcuenta.idSubCuenta }}">{{ subcuenta.nombre }}</option>
                                 {% for detalle in subcuenta.detalles.all %}
-                                    <option value="det_{{ detalle.idCuentaDetalle }}">-- {{ detalle.nombre }}</option>
+                                    <option value="cuentadetalle:{{ detalle.idCuentaDetalle }}">-- {{ detalle.nombre }}</option>
                                 {% endfor %}
                             {% endfor %}
                         </select>
+                        
                     </td>
                     <td><input type="number" class="form-control debe" placeholder="Debe"></td>
                     <td><input type="number" class="form-control haber" placeholder="Haber"></td>
@@ -67,29 +68,6 @@
 
 <script>
     $(document).ready(function() {
-        // Función para obtener el token CSRF de las cookies
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        const csrftoken = getCookie('csrftoken');
-
-        // Configuración global para enviar el token CSRF en las solicitudes AJAX
-        $.ajaxSetup({
-            headers: { "X-CSRFToken": csrftoken }
-        });
-
         // Agregar nueva fila
         $('#addRow').on('click', function() {
             const newRow = $('#dynamicTable tbody tr:first').clone();
@@ -97,109 +75,78 @@
             newRow.find('.cuenta-select').val(''); // Limpiar el select de la nueva fila
             $('#dynamicTable tbody').append(newRow);
         });
-
         // Eliminar fila
         $('#dynamicTable').on('click', '.removeRow', function() {
             $(this).closest('tr').remove();
         });
-
-        // Guardar transacciones
-        $('#saveTransactions').on('click', function() {
-            const transactions = [];
-
-            $('#dynamicTable tbody tr').each(function() {
-                const cuenta_id = $(this).find('.cuenta-select').val();
-                const debe = parseFloat($(this).find('.debe').val()) || 0;
-                const haber = parseFloat($(this).find('.haber').val()) || 0;
-
-                if (cuenta_id) {
-                    transactions.push({
-                        cuenta_id: cuenta_id,
-                        debe: debe,
-                        haber: haber
-                    });
-                }
+ // Guardar transacciones
+$('#saveTransactions').on('click', function() {
+    const transactions = [];
+    $('#dynamicTable tbody tr').each(function() {
+        const cuentaValue = $(this).find('.cuenta-select').val();
+        if (cuentaValue) {
+            const [cuenta_id_type, cuenta_id] = cuentaValue.split(':');  // Separar el tipo y el ID
+            const debe = parseFloat($(this).find('.debe').val()) || 0;
+            const haber = parseFloat($(this).find('.haber').val()) || 0;
+            
+            transactions.push({
+                cuenta_id: cuenta_id,
+                cuenta_id_type: cuenta_id_type,
+                debe: debe,
+                haber: haber
             });
+        }
+    });
 
-            if (transactions.length === 0) {
+    // Enviar transacciones al servidor
+    $.ajax({
+        url: '/save_transactions/',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ transactions: transactions }),
+        success: function(response) {
+            if (response.status === 'success') {
+                // Limpia los campos de cada fila sin eliminar las filas
+                $('#dynamicTable tbody tr').each(function() {
+                    $(this).find('.cuenta-select').val(''); // Reiniciar el select
+                    $(this).find('.debe').val(''); // Reiniciar campo Debe
+                    $(this).find('.haber').val(''); // Reiniciar campo Haber
+                });
+                // Resetear totales
+                $('#totalDebe').text('0');
+                $('#totalHaber').text('0');
+                
+                // Mostrar alerta de éxito
                 Swal.fire({
-                    icon: 'warning',
-                    title: 'Sin Transacciones',
-                    text: 'No has agregado ninguna transacción.',
+                    icon: 'success',
+                    title: 'Guardado con éxito',
+                    text: 'Las transacciones se han guardado correctamente.',
                     confirmButtonText: 'Aceptar'
                 });
-                return;
             }
-
-            // Enviar transacciones al servidor
-            $.ajax({
-                url: '/save_transactions/',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ transactions: transactions }),
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Limpiar tabla
-                        $('#dynamicTable tbody').empty();
-
-                        // Restaurar una fila vacía
-                        const emptyRow = `<tr>
-                            <td>
-                                <select class="form-control cuenta-select" name="cuenta">
-                                    <option value="" disabled selected>Seleccione una cuenta</option>
-                                    {% for subcuenta in subcuentas_filtradas %}
-                                        <option value="sub_{{ subcuenta.idSubCuenta }}">{{ subcuenta.nombre }}</option>
-                                        {% for detalle in subcuenta.detalles.all %}
-                                            <option value="det_{{ detalle.idCuentaDetalle }}">-- {{ detalle.nombre }}</option>
-                                        {% endfor %}
-                                    {% endfor %}
-                                </select>
-                            </td>
-                            <td><input type="number" class="form-control debe" placeholder="Debe"></td>
-                            <td><input type="number" class="form-control haber" placeholder="Haber"></td>
-                            <td><button class="btn btn-danger btn-sm removeRow">Eliminar</button></td>
-                        </tr>`;
-                        $('#dynamicTable tbody').append(emptyRow);
-
-                        // Resetear totales
-                        $('#totalDebe').text('0');
-                        $('#totalHaber').text('0');
-
-                        // Mostrar alerta de éxito
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Guardado con éxito',
-                            text: 'Las transacciones se han guardado correctamente.',
-                            confirmButtonText: 'Aceptar'
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Hubo un problema al guardar las transacciones.',
-                        confirmButtonText: 'Aceptar'
-                    });
-                }
+        },
+        error: function(xhr) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Hubo un problema al guardar las transacciones.',
+                confirmButtonText: 'Aceptar'
             });
-        });
-
+        }
+    });
+});
         // Calcular total de debe y haber
         $('#calculateTotal').on('click', function() {
             let totalDebe = 0;
             let totalHaber = 0;
-
             $('#dynamicTable tbody tr').each(function() {
                 const debe = parseFloat($(this).find('.debe').val()) || 0;
                 const haber = parseFloat($(this).find('.haber').val()) || 0;
                 totalDebe += debe;
                 totalHaber += haber;
             });
-
             $('#totalDebe').text(totalDebe.toFixed(2));
             $('#totalHaber').text(totalHaber.toFixed(2));
-
             // Verificar si se cumple el principio de partida doble
             if (totalDebe !== totalHaber) {
                 Swal.fire({
