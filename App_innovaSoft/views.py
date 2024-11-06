@@ -22,7 +22,7 @@ from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib.units import inch
 from xhtml2pdf import pisa
 
-from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
+from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable, Departamento
 
 # Crea tus vistas aquí.
 def home(request):
@@ -976,8 +976,8 @@ def calcular_costos_indirectos(request):
     subcuentas = SubCuenta.objects.filter(codigoCuenta__in=codigos_cuentas)
     cuentas_detalle = CuentaDetalle.objects.filter(codigoCuenta__in=codigos_cuentas)
 
-    print("SubCuentas obtenidas:", subcuentas)  # Depuración
-    print("CuentasDetalle obtenidas:", cuentas_detalle)  # Depuración
+    #print("SubCuentas obtenidas:", subcuentas)  # Depuración
+    #print("CuentasDetalle obtenidas:", cuentas_detalle)  # Depuración
 
     # Calcular el saldo para cada cuenta y almacenar los datos
     costos_indirectos = []
@@ -1010,4 +1010,22 @@ def calcular_costos_indirectos(request):
     context = {
         'costos_indirectos': costos_indirectos
     }
+    return render(request, 'App_innovaSoft/costos.html', context)
+
+# Vista para listar los departamentos
+def lista_departamentos(request):
+    print("La vista lista_departamentos se está ejecutando...")  # Depuración inicial
+    # Obtener todos los departamentos desde la base de datos
+    departamentos = Departamento.objects.all()  # Obtén todos los objetos de Departamento
+
+    print("Departamentos obtenidos:", departamentos)  # Depuración
+    
+    # Crear un contexto con los departamentos
+    context = {
+        'departamentos': departamentos
+    }
+    
+    print("Contexto enviado a la plantilla:", context)
+
+    # Renderizar el template con el contexto
     return render(request, 'App_innovaSoft/costos.html', context)

@@ -82,9 +82,18 @@
                     </div>
                     <div class="mb-3">
                         <label for="departamento" class="form-label">Departamento:</label>
+                        {% if departamentos %}
+                        <p>Departamentos están disponibles</p>
+                        {% else %}
+                        <p>No se encontraron departamentos.</p>
+                        {% endif %}
                         <select class="form-select" id="departamento" name="departamento"> <!-- name="departamento" -->
-                            <option selected>Departamento de desarrollo</option>
-                            <!-- Más opciones aquí -->
+                            <option selected>Seleccione un Departamento</option>
+                            {% for departamento in departamentos %}
+                            <option value="{{ departamento.idDepartamento }}">{{ departamento.nombre }}</option>
+                            {% empty %}
+                            <option disabled>No hay departamentos disponibles</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
