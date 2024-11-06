@@ -1,0 +1,75 @@
+/* Inventario CSS */
+.form-select {
+    background-color: #d8d5d5d2; /* Color de fondo del combobox */
+    color: #000000; /* Color del texto en el combobox */
+    border: 1px solid #ccc; /* Opcional: agregamos un borde más claro */
+    padding: 0.5rem 1rem; /* Opcional: ajuste de padding */
+    border-radius: 4px; /* Opcional: bordes redondeados */
+    font-size: 1rem; /* Opcional: tamaño de fuente */
+}
+
+.form-select:focus {
+    outline-color: #007bff; /* Cambio de color cuando el combobox está en foco */
+    border-color: #007bff; /* Cambio de borde cuando el combobox está en foco */
+}
+
+
+.table-scroll {
+    max-height: 350px; 
+    overflow-y: auto;
+}
+
+.table thead {
+    position: sticky;
+    top: 0; /* Esto fija el encabezado en la parte superior */
+    background-color: rgb(44, 39, 49) !important;
+    color: white;
+    z-index: 1; /* Asegura que el encabezado esté encima del contenido del tbody */
+}
+
+.table tbody tr:hover {
+    background-color: #f2f2f2;
+}
+
+/* Ajustes de estilo para la tabla de totales */
+#totales {
+    width: 50%; 
+    font-size: 0.9em; 
+    margin: auto; 
+}
+
+#totales th, #totales td {
+    padding: 8px; /* Reduce el relleno para una apariencia más compacta */
+}
+
+/* Ajuste del contenedor de título y botón */
+#totales-container {
+    width: 50%; /* Ancho igual al de la tabla */
+    margin: auto; /* Centra el contenedor */
+}
+
+.d-flex {
+    display: flex;
+    justify-content: space-between; /* Coloca el título a la izquierda y el botón a la derecha */
+    align-items: center;
+}
+
+h2 {
+    font-size: 1.25em;
+    margin-bottom: 0;
+}
+
+.btn {
+    margin-top: 5px;
+}
+
+/* Ajustes de estilo para la tabla de totales */
+#totales {
+    width: 50%; /* Reduce el ancho de la tabla */
+    font-size: 0.9em;
+    margin: auto; /* Centra la tabla */
+}
+
+#totales th, #totales td {
+    padding: 8px; /* Reduce el relleno para una apariencia más compacta */
+}
