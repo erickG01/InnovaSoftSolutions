@@ -1006,3 +1006,56 @@ def get_rubros(request, tipo_id):
 def get_cuentas_mayor(request, rubro_id):
     cuentas_mayor = CuentaDeMayor.objects.filter(idRubro_id=rubro_id).values('idDeMayor', 'nombre')
     return JsonResponse(list(cuentas_mayor), safe=False)
+
+
+#METODO PARA CALCULAR LOS COSTOS INDIRECTOS
+def calcular_costos_indirectos(request):
+    # Códigos de cuentas a incluir en la tabla
+    codigos_cuentas = [
+        "1201.01", "4102.03.01", "4102.03.08", "4102.02", 
+        "4102.03.06", "4102.03.07", "4102.04.03", 
+        "4102.04.04", "4102.08.03", "4102.08.05"
+    ]
+    
+    # Obtener las cuentas correspondientes en SubCuenta y CuentaDetalle
+    subcuentas = SubCuenta.objects.filter(codigoCuenta__in=codigos_cuentas)
+    cuentas_detalle = CuentaDetalle.objects.filter(codigoCuenta__in=codigos_cuentas)
+
+    print("SubCuentas obtenidas:", subcuentas)  # Depuración
+    print("CuentasDetalle obtenidas:", cuentas_detalle)  # Depuración
+
+    # Calcular el saldo para cada cuenta y almacenar los datos
+    costos_indirectos = []
+    total_costos = 0
+
+    # Procesar subcuentas
+    for cuenta in subcuentas:
+        transacciones = Transacion.objects.filter(idSubCuenta=cuenta)
+        saldo = sum(trans.debe - trans.haber for trans in transacciones)
+        total_costos += saldo
+        costos_indirectos.append({
+            'nombre': cuenta.nombre,
+            'saldo': saldo
+        })
+
+    # Procesar cuentas de detalle
+    for cuenta in cuentas_detalle:
+        transacciones = Transacion.objects.filter(idCuentaDetalle=cuenta)
+        saldo = sum(trans.debe - trans.haber for trans in transacciones)
+        total_costos += saldo
+        costos_indirectos.append({
+            'nombre': cuenta.nombre,
+            'saldo': saldo
+        })
+
+    # Agregar el total al final
+    costos_indirectos.append({
+        'nombre': 'Total',
+        'saldo': total_costos
+    })
+
+    # Pasar los datos al template
+    context = {
+        'costos_indirectos': costos_indirectos
+    }
+    return render(request, 'App_innovaSoft/costos.html', context)
