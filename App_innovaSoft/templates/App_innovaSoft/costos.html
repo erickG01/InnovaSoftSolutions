@@ -13,60 +13,124 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="{% static 'css/costos.css' %}">
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        
     </head>
     <body>
-        <h3 class="costos_txt text-body-secondary">Costos Indirectos</h3>
-
-        <!-- Tabla de Costos Indirectos -->
-        <table class="table table-bordered table-hover tabla">
-            <thead class="table-dark">
-                <tr>
-                    <th>Cuentas CIF</th>
-                    <th>Monto</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Edificio</td>
-                    <td>$200</td>
-                </tr>
-                <tr>
-                    <td>Servicio de agua</td>
-                    <td>$25.50</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="costoTotales">
-            <h3 class="text-body-secondary">Costos totales</h3>
+        <section class="container-fluid mt-5  ">
             <!-- Botón para abrir el modal -->
-            <button type="button" class="btn_orden btn btn-success" data-bs-toggle="modal" data-bs-target="#ordenModal">
-                Crear Orden
-            </button>
-
-            <!-- Tabla de Costos Totales -->
-            <table class="table table-bordered table-hover tablaCosto">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Tasa del CIF</th>
-                        <th>Costo de mano de obra</th>
-                        <th>Costo de materia prima</th>
-                        <th>Costo total</th>
-                     
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>20%</td>
-                        <td>$3,500.00</td>
-                        <td>$125.00</td>
-                        <td>$3,625.00</td>
-                     
-                    </tr>
-                </tbody>
-            </table>
-            <button id="calculateTotal" class="btn btn-dark">Calcular total</button>
-        </div>
+            <div class="text-center mb-4 ">
+                <button type="button" class="btn btn-success btn-lg me-5" data-bs-toggle="modal" data-bs-target="#ordenModal">
+                    Crear Orden
+                </button>
+            </div>
+        
+            <!-- Sección de Costos Indirectos -->
+            <div class="d-flex justify-content-center mb-4">
+                <div class="card shadow-sm w-75">
+                    <div class="card-header bg-dark text-white d-flex align-items-center">
+                        <i class="bi bi-currency-exchange me-2"></i> <!-- Ícono de Bootstrap Icons -->
+                        <h5 class="mb-0">Costos Indirectos</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover text-center">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Cuentas CIF</th>
+                                    <th>Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for costo in costos_indirectos %}
+                                    <tr>
+                                        <td>{{ costo.nombre }}</td>
+                                        <td>${{ costo.saldo|floatformat:2 }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="2" >No hay datos disponibles</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="d-flex justify-content-center mb-4">
+                <div class="card shadow-sm w-75">
+                    <div class="card-header bg-dark text-white d-flex align-items-center">
+                        <i class="bi bi-calculator me-2"></i>
+                        <h5 class="mb-0">Costos Totales</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Fila con el Combobox a la izquierda y la tabla a la derecha -->
+                        <div class="row">
+                            <!-- Columna para el Combobox -->
+                            <div class="col-md-4 mb-3">
+                                <label for="ordenSelect" class="form-label">Seleccionar Orden de Trabajo</label>
+                                <select id="ordenSelect" class="form-select">
+                                    <option value="">Seleccione una orden</option>
+                                    {% for orden in ordenes %}
+                                        <option value="{{ orden.idOrden }}" data-fecha-inicio="{{ orden.fechaInico }}" 
+                                                data-fecha-fin="{{ orden.fechaFin }}" data-personal="{{ orden.personal }}" 
+                                                data-departamento="{{ orden.idDepartamento }}">
+                                            {{ orden.numeroOrden }}
+                                        </option>
+                                    {% empty %}
+                                        <option value="">No hay órdenes disponibles</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                    
+                            <!-- Columna para la tabla de detalles de la orden -->
+                            <div class="col-md-8 mb-3">
+                                <h5>Detalles de la Orden</h5>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha de Inicio</th>
+                                            <th>Fecha de Fin</th>
+                                            <th>Personal</th>
+                                            <th>Departamento</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaOrden">
+                                        <!-- Los datos se llenarán con JavaScript cuando se seleccione una orden -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+            
+                        <!-- Tabla de costos -->
+                        <table class="table table-striped table-hover text-center">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Tasa del CIF</th>
+                                    <th>Costo de mano de obra</th>
+                                    <th>Costo de materia prima</th>
+                                    <th>Costo total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td id="tasa">0%</td>
+                                    <td id="costoManoObra">$0.00</td>
+                                    <td id="costoMateriaPrima">$0.00</td>
+                                    <td id="costoTotal">$0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+        </section>
+        
+        
+        
 
         <!-- Modal -->
         <div class="modal fade" id="ordenModal" tabindex="-1" aria-labelledby="ordenModalLabel" aria-hidden="true">
@@ -78,50 +142,212 @@
                     </div>
                     <div class="modal-body">
                         <!-- Formulario dentro del modal -->
-                        <form>
+                        <form id="ordenForm" method="POST">
+                            {% csrf_token %}
                             <div class="mb-3">
                                 <label for="numeroOrden" class="form-label">Número de orden:</label>
-                                <input type="text" class="form-control" id="numeroOrden" placeholder="Ingrese número de orden">
+                                <input type="text" class="form-control" id="numeroOrden" name="numeroOrden" placeholder="Ingrese número de orden" required>
                             </div>
                             <div class="mb-3">
                                 <label for="fechaInicio" class="form-label">Fecha inicio:</label>
-                                <input type="date" class="form-control" id="fechaInicio">
+                                <input type="date" class="form-control" id="fechaInicio" name="fechaInicio" required>
                             </div>
                             <div class="mb-3">
                                 <label for="fechaFin" class="form-label">Fecha fin:</label>
-                                <input type="date" class="form-control" id="fechaFin">
+                                <input type="date" class="form-control" id="fechaFin" name="fechaFin" required>
                             </div>
                             <div class="mb-3">
                                 <label for="departamento" class="form-label">Departamento:</label>
-                                <select class="form-select" id="departamento">
-                                    <option selected>Departamento de desarrollo</option>
-                                    <!-- Más opciones aquí -->
+                                <select class="form-select" id="departamento" name="departamento" required>
+                                    <!-- Los departamentos se cargarán dinámicamente aquí -->
                                 </select>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3" id="personal-container">
                                 <label class="form-label">Personal:</label><br>
-                                <input type="checkbox" id="persona1"> <label for="persona1">Juan Perez</label><br>
-                                <input type="checkbox" id="persona2"> <label for="persona2">Ana Lucia</label><br>
-                                <input type="checkbox" id="persona3"> <label for="persona3">Steven Martinez</label><br>
-                                <button type="button" class="btn btn-outline-primary mt-2">Seleccionar todos</button>
+                                <!-- Los checkboxes de los empleados se cargarán aquí dinámicamente -->
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Materia Prima:</label><br>
-                                <input type="checkbox" id="materia1"> <label for="materia1">Energía</label><br>
-                                <input type="checkbox" id="materia2"> <label for="materia2">Internet</label><br>
-                                <button type="button" class="btn btn-outline-primary mt-2">Seleccionar todos</button>
+                                <input type="checkbox" id="materia1" name="materia[]" value="energia"> <label for="materia1">Energía</label><br>
+                                <input type="checkbox" id="materia2" name="materia[]" value="internet"> <label for="materia2">Internet</label><br>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="guardarOrden">Guardar</button>
                             </div>
                         </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary">Guardar</button>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Scripts de Bootstrap -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const departamentoSelect = document.getElementById('departamento');
+                const personalContainer = document.getElementById('personal-container');
+                
+                // Cargar departamentos al abrir el modal
+                fetch('/api/departamentos/')
+                    .then(response => response.json())
+                    .then(data => {
+                        departamentoSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
+                        data.forEach(departamento => {
+                            const option = document.createElement('option');
+                            option.value = departamento.id;
+                            option.text = departamento.nombre;
+                            departamentoSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error al cargar departamentos:', error));
+            
+                // Cargar empleados al seleccionar un departamento
+                departamentoSelect.addEventListener('change', function () {
+                    const departamentoId = this.value;
+            
+                    if (departamentoId) {
+                        personalContainer.innerHTML = '<p>Cargando empleados...</p>';
+                        
+                        fetch(`/api/empleados/${departamentoId}/`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Error al cargar empleados');
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                personalContainer.innerHTML = '';
+                                if (data.length === 0) {
+                                    personalContainer.innerHTML = '<p>No hay empleados en este departamento.</p>';
+                                } else {
+                                    data.forEach(empleado => {
+                                        const checkbox = document.createElement('input');
+                                        checkbox.type = 'checkbox';
+                                        checkbox.id = `persona${empleado.idEmpleado}`;
+                                        checkbox.name = 'personal[]';
+                                        checkbox.value = empleado.idEmpleado;
+
+                                        const label = document.createElement('label');
+                                        label.htmlFor = checkbox.id;
+                                        label.innerText = empleado.nombre;
+
+                                        personalContainer.appendChild(checkbox);
+                                        personalContainer.appendChild(label);
+                                        personalContainer.appendChild(document.createElement('br'));
+                                    });
+
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error al cargar empleados:', error);
+                                personalContainer.innerHTML = '<p>Error al cargar empleados.</p>';
+                            });
+                    } else {
+                        personalContainer.innerHTML = '<p>Seleccione un departamento para ver empleados.</p>';
+                    }
+                });
+            
+                // Guardar orden al hacer clic en "Guardar"
+                document.getElementById('guardarOrden').addEventListener('click', function () {
+                    const form = document.getElementById('ordenForm');
+                    if (form.checkValidity()) {
+                        const formData = new FormData(form);
+                
+                        fetch('/guardar_orden/', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                Swal.fire({
+                                    title: '¡Éxito!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                                const ordenModal = bootstrap.Modal.getInstance(document.getElementById('ordenModal'));
+                                ordenModal.hide();
+                                form.reset();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error al guardar la orden:', error);
+                        });
+                    } else {
+                        form.reportValidity(); // Muestra la validación del formulario si falta algún campo
+                    }
+                });
+            });
+
+            document.getElementById('ordenSelect').addEventListener('change', function () {
+                const ordenId = this.value;
+                
+                if (ordenId) {
+                    fetch(`/get-orden-data/${ordenId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.error) {
+                                // Mostrar los datos de la orden seleccionada
+                                const costosIndirectos = parseFloat("{{ total_cif }}");
+                                const costoManoDeObra = data.costoManoDeObra.toFixed(2);
+                                const costoMateriaPrima = data.costoMateriaPrima.toFixed(2);
+                                const costoTotal = (data.costoManoDeObra + data.costoMateriaPrima+costosIndirectos).toFixed(2);
+
+                            
+
+                                // Calcular la tasa
+                                let tasa = 0;
+                                if (costoManoDeObra > 0) {
+                                    tasa = (costosIndirectos / costoManoDeObra * 100).toFixed(2); // Se calcula la tasa en porcentaje
+                                }
+                                document.getElementById('tasa').textContent = `${tasa}%`;
+                                document.getElementById('costoManoObra').textContent = `$${costoManoDeObra}`;
+                                document.getElementById('costoMateriaPrima').textContent = `$${costoMateriaPrima}`;
+                                document.getElementById('costoTotal').textContent = `$${costoTotal}`;
+                            } else {
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => console.error('Error al obtener los datos de la orden:', error));
+                } else {
+                    // Restablecer los campos si no hay una orden seleccionada
+                    document.getElementById('costoManoObra').textContent = "$0.00";
+                    document.getElementById('costoMateriaPrima').textContent = "$0.00";
+                    document.getElementById('costoTotal').textContent = "$0.00";
+                }
+            });
+
+            document.getElementById('ordenSelect').addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                
+                if (selectedOption.value) {
+                    const fechaInicio = selectedOption.getAttribute('data-fecha-inicio');
+                    const fechaFin = selectedOption.getAttribute('data-fecha-fin');
+                    const personal = selectedOption.getAttribute('data-personal');
+                    const departamento = selectedOption.getAttribute('data-departamento');
+                    
+                    // Actualizar la tabla con los datos de la orden seleccionada
+                    const tabla = document.getElementById('tablaOrden');
+                    tabla.innerHTML = `
+                        <tr>
+                            <td>${fechaInicio}</td>
+                            <td>${fechaFin}</td>
+                            <td>${personal}</td>
+                            <td>${departamento}</td>
+                        </tr>
+                    `;
+                } else {
+                    // Limpiar la tabla si no hay selección
+                    document.getElementById('tablaOrden').innerHTML = '';
+                }
+            });
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     </body>
 </html>
 {% endblock %}
