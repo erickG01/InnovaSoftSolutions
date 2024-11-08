@@ -30,10 +30,6 @@ urlpatterns = [
     path('get_cuentas_mayor/<int:rubro_id>/', get_cuentas_mayor, name='get_cuentas_mayor'),
     path('', views.home, name='home'),  # Ruta para la raíz
     path('Costos/',views.Costos,name="costos"),
-    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
-    path('estadoCapital/',views.estadoCapital,name="estadoCapital"),
-     path('balanceGeneral/',views.balanceGeneral,name="balanceGeneral"),
-    path('transacciones/', views.transaccion, name='transaccion'),  # Transacciones
     path('transacciones/', views.transaccion_view, name='transaccion'),  # Transacciones
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
@@ -50,10 +46,12 @@ urlpatterns = [
     path('nuevaCuenta/', views.nuevaCuenta, name="nuevaCuenta"),
     path('get_rubros/<int:tipo_id>/', get_rubros, name='get_rubros'),
     path('get_cuentas_mayor/<int:rubro_id>/', get_cuentas_mayor, name='get_cuentas_mayor'),
+    path('costos/', views.calcular_costos_indirectos, name='costos'),
     path('api/departamentos/', views.obtener_departamentos, name='obtener_departamentos'),
     path('api/empleados/<int:departamento_id>/', views.obtener_empleados, name='obtener_empleados'),
     path('guardar_orden/', views.guardar_orden_trabajo, name='guardar_orden'),
-    path('costos/', views.calcular_costos_indirectos, name='costos'),
     path('get-orden-data/<int:orden_id>/', views.get_orden_data, name='get_orden_data'),
+  
+
 ]
 

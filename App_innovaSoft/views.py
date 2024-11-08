@@ -1,12 +1,9 @@
-
 from django.shortcuts import render,redirect
-from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable,Transacion
-from django.shortcuts import render,  redirect
-from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable
+from .models import GrupoCuenta, RubroDeAgrupacion, CuentaDeMayor,SubCuenta,CuentaDetalle,Transacion,Informacion,PeriodoContable,Empleado,CostoReal,Departamento,OrdenTrabajo
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login
 from django.core.paginator import Paginator
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum, F,Q
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib import colors
@@ -15,28 +12,17 @@ from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from django.http import HttpResponse, JsonResponse
 from decimal import Decimal
 from reportlab.lib.units import inch
-from django.db.models import Sum, F, Func, Value
-from django.db.models.functions import Abs
-from xhtml2pdf import pisa
-from io import BytesIO
-from django.template.loader import render_to_string
-from itertools import zip_longest
 from django.db.models.functions import Abs
 from xhtml2pdf import pisa
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.db import transaction
-from django.urls import reverse
-from django.db.models import Max
 from itertools import zip_longest
+from django.db.models import Max
+from django.urls import path
 from decimal import Decimal, ROUND_HALF_UP
-from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404
-from .models import Departamento, Empleado, OrdenTrabajo,CostoReal
-from django.db import models  # Importa models aquí
-
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
@@ -55,6 +41,11 @@ def estadoFinancieros(request):
  #   return render(request,"App_innovaSoft/CatalogoCuentas.html")
 
 #Vistas CatalogoCuentas
+def transaccion(request):
+    return render(request,"App_innovaSoft/transaccion.html")
+
+
+#METODO PARA CONSULTAR LAS CUENTAS
 def transaccion(request):
     return render(request,"App_innovaSoft/transaccion.html")
 
@@ -99,411 +90,7 @@ def tipos_cuentas(request):
 
     return render(request, 'App_innovaSoft/CatalogoCuentas.html', context)
 
-
-
-# Vista para agregar nueva cuenta al catálogo
-def nuevaCuenta(request):
-    # Obtener todos los tipos de cuentas, rubros y cuentas mayores
-    tipos_cuenta = GrupoCuenta.objects.all()
-    rubros = RubroDeAgrupacion.objects.all()
-    cuentas_mayor = CuentaDeMayor.objects.all()
-
-    if request.method == 'POST':
-        subcuenta_nombre = request.POST.get('subcuenta')
-        cuenta_mayor_id = request.POST.get('cuentaMayor')
-        cuenta_detalle_nombre = request.POST.get('cuentaDetalle')  # Recibir el nombre de la cuenta detalle
-        cuenta_detalle_nombre2 = request.POST.get('cuentaDetalle2')  # Recibir el nombre de la cuenta detalle2
-        subcuenta_existente_id = request.POST.get('subcuentaExistente')  # Obtener la subcuenta seleccionada
-
-        # Validación: asegurarse de que se proporcionen los datos necesarios
-        if subcuenta_nombre and cuenta_mayor_id:
-            try:
-                # Obtener el idDeMayor como entero
-                id_mayor = int(cuenta_mayor_id)
-                # Obtener el objeto CuentaDeMayor
-                cuenta_mayor = CuentaDeMayor.objects.get(idDeMayor=id_mayor)
-                prefijo = cuenta_mayor.codigoCuenta[:4]  # Obtener los primeros cuatro dígitos del codigoCuenta
-                
-                # ------------------- SECCIÓN DE SUBCUENTAS -------------------
-                # Obtener el último idSubCuenta registrado en la tabla
-                ultimo_id_subcuenta = SubCuenta.objects.aggregate(Max('idSubCuenta'))['idSubCuenta__max']
-                nuevo_id_subcuenta = (ultimo_id_subcuenta + 1) if ultimo_id_subcuenta is not None else 1  # Empezar desde 1 si no hay registros
-                
-                # Generar el siguiente sufijo numérico basado en las subcuentas existentes
-                subcuentas = SubCuenta.objects.filter(idDeMayor_id=id_mayor)
-                ultimo_codigo_subcuenta = subcuentas.aggregate(Max('codigoCuenta'))['codigoCuenta__max']
-                nuevo_sufijo_subcuenta = "01"  # Valor por defecto
-                
-                if ultimo_codigo_subcuenta:
-                    ultimo_sufijo_subcuenta = int(ultimo_codigo_subcuenta.split('.')[1])
-                    nuevo_sufijo_subcuenta = f"{ultimo_sufijo_subcuenta + 1:02d}" if ultimo_sufijo_subcuenta < 99 else None
-                
-                # Validación de límite en el sufijo
-                if not nuevo_sufijo_subcuenta:
-                    messages.error(request, 'No se puede crear más subcuentas para esta cuenta de mayor.')
-                    return redirect('nuevaCuenta')
-
-                # Crear y guardar la nueva subcuenta
-                codigo_cuenta = f"{prefijo}.{nuevo_sufijo_subcuenta}"
-                subcuenta = SubCuenta(
-                    idSubCuenta=nuevo_id_subcuenta,  # Usar el ID generado manualmente
-                    idDeMayor_id=cuenta_mayor_id,
-                    codigoCuenta=codigo_cuenta,
-                    nombre=subcuenta_nombre
-                )
-                subcuenta.save()
-                # ------------------------------------------------------------
-
-                # ------------------- SECCIÓN DE CUENTAS DETALLE -------------------
-                # Verificar si se debe crear una Cuenta Detalle desde el input 1 o desde la subcuenta existente
-                if cuenta_detalle_nombre:
-                    # Crear la cuenta detalle con el nombre ingresado
-                    cuenta_detalle = crearCuentaDetalle(subcuenta, cuenta_detalle_nombre)
-                    messages.success(request, f'Subcuenta "{subcuenta_nombre}" y Cuenta Detalle "{cuenta_detalle_nombre}" creadas con éxito.')
-                else:
-                    messages.error(request, 'Debe proporcionar el nombre de la Cuenta Detalle o seleccionar una Subcuenta existente para crearla.')
-
-            except CuentaDeMayor.DoesNotExist:
-                messages.error(request, 'La Cuenta Mayor seleccionada no existe.')
-            except Exception as e:
-                messages.error(request, f'Ocurrió un error inesperado: {e}')
-
-        # Si se intenta crear solo una cuenta detalle, se puede omitir la validación de subcuenta y cuenta mayor
-        elif cuenta_detalle_nombre2 and subcuenta_existente_id:
-            # Aquí va la lógica para crear la cuenta detalle desde la subcuenta existente
-            try:
-                subcuenta_existente = SubCuenta.objects.get(idSubCuenta=subcuenta_existente_id)
-                cuenta_detalle = crearCuentaDetalle(subcuenta_existente, cuenta_detalle_nombre2)
-                messages.success(request, f'Cuenta Detalle "{cuenta_detalle_nombre2}" creada con éxito desde la Subcuenta seleccionada.')
-            except SubCuenta.DoesNotExist:
-                messages.error(request, 'La Subcuenta seleccionada no existe.')
-
-        else:
-            messages.error(request, 'Debe ingresar el nombre de la Subcuenta y seleccionar la Cuenta Mayor, o proporcionar el nombre de la Cuenta Detalle y seleccionar una Subcuenta existente.')
-
-        return redirect('CatalogoCuentas')
-
-    return render(request, 'App_innovaSoft/nuevaCuenta.html', {
-        'tipos_cuenta': tipos_cuenta,
-        'rubros': rubros,
-        'cuentas_mayor': cuentas_mayor,
-         'subcuentas': SubCuenta.objects.all(),  # Asegúrate de que esto siempre esté actualizado
-    })
-
-def crearCuentaDetalle(subcuenta, nombre):
-    # Obtener el último idCuentaDetalle registrado
-    ultimo_id_cuenta_detalle = CuentaDetalle.objects.aggregate(Max('idCuentaDetalle'))['idCuentaDetalle__max']
-    nuevo_id_cuenta_detalle = (ultimo_id_cuenta_detalle + 1) if ultimo_id_cuenta_detalle is not None else 1  # Empezar desde 1 si no hay registros
-
-    # Obtener el último código de CuentaDetalle para generar el nuevo código
-    ultimo_codigo_cuenta_detalle = CuentaDetalle.objects.filter(idCuenta=subcuenta).aggregate(Max('codigoCuenta'))['codigoCuenta__max']
-
-    # Generar el siguiente sufijo numérico basado en el último código de CuentaDetalle
-    nuevo_sufijo_detalle = "01"  # Valor por defecto
-    if ultimo_codigo_cuenta_detalle:
-        ultimo_sufijo_detalle = int(ultimo_codigo_cuenta_detalle.split('.')[-1])
-        nuevo_sufijo_detalle = f"{ultimo_sufijo_detalle + 1:02d}" if ultimo_sufijo_detalle < 99 else None
-
-    # Validación de límite en el sufijo
-    if not nuevo_sufijo_detalle:
-        raise Exception('No se puede crear más cuentas detalle para esta subcuenta.')
-
-    # Crear el código para la Cuenta Detalle basado en el código de la SubCuenta
-    nuevo_codigo_cuenta_detalle = f"{subcuenta.codigoCuenta}.{nuevo_sufijo_detalle}"
-
-    # Crear y guardar la nueva cuenta detalle
-    cuenta_detalle = CuentaDetalle(
-        idCuenta=subcuenta,  # Relacionar con la subcuenta
-        idCuentaDetalle=nuevo_id_cuenta_detalle,  # Usar el ID generado manualmente
-        codigoCuenta=nuevo_codigo_cuenta_detalle,
-        nombre=nombre 
-    )
-    cuenta_detalle.save()
-    return cuenta_detalle
-
-#filtrado combobox
-def get_rubros(request, tipo_id):
-    rubros = RubroDeAgrupacion.objects.filter(idGrupoCuenta_id=tipo_id).values('idRubro', 'nombre')
-    return JsonResponse(list(rubros), safe=False)
-
-def get_cuentas_mayor(request, rubro_id):
-    cuentas_mayor = CuentaDeMayor.objects.filter(idRubro_id=rubro_id).values('idDeMayor', 'nombre')
-    return JsonResponse(list(cuentas_mayor), safe=False)
-
-#funciones para usar en balance general y estado de capital
-
-def obtener_info_empresa():
-    info_empresa = Informacion.objects.first()  # Obtener la primera entrada
-    return info_empresa.nombreEmpresa if info_empresa else "Nombre de la Empresa"
-
-def obtener_fechas_periodo():
-    periodo = PeriodoContable.objects.first()  # Ajusta esto según tu lógica
-    if periodo:
-        fecha_inicio = periodo.fechaInicioDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
-        fecha_fin = periodo.fechaFinDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
-        return fecha_inicio, fecha_fin
-    return "Fecha de Inicio", "Fecha de Fin"
-
-
-def balanceGeneral(request):
-    # Obtener rubros específicos
-    activo_corriente = RubroDeAgrupacion.objects.filter(nombre="ACTIVO CORRIENTE").first()
-    activo_no_corriente = RubroDeAgrupacion.objects.filter(nombre="ACTIVO NO CORRIENTE").first()
-    pasivo_corriente = RubroDeAgrupacion.objects.filter(nombre="PASIVO CORRIENTE").first()
-    pasivo_no_corriente = RubroDeAgrupacion.objects.filter(nombre="PASIVO NO CORRIENTE").first()
-
-    # Filtrar subcuentas y cuentas de detalle con transacciones con saldo distinto de cero
-    transacciones_activo_corriente = Transacion.objects.filter(
-    idSubCuenta__idDeMayor__idRubro=activo_corriente).exclude(idSubCuenta__idSubCuenta=6).values('idSubCuenta').annotate(
-    saldo_absoluto=Abs(Sum('debe') - Sum('haber'))).filter(saldo_absoluto__gt=0)
-
-    transacciones_detalle_activo_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=activo_corriente).values('idCuentaDetalle').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    ).filter(saldo_absoluto__gt=0)
-
-    transacciones_activo_no_corriente = Transacion.objects.filter(idSubCuenta__idDeMayor__idRubro=activo_no_corriente).values('idSubCuenta').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    ).filter(saldo_absoluto__gt=0)
-    
-    transacciones_detalle_activo_no_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=activo_no_corriente).values('idCuentaDetalle').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    ).filter(saldo_absoluto__gt=0)
-
-    transacciones_pasivo_corriente = Transacion.objects.filter(idSubCuenta__idDeMayor__idRubro=pasivo_corriente).values('idSubCuenta').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    ).filter(saldo_absoluto__gt=0)
-    
-    transacciones_detalle_pasivo_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=pasivo_corriente).values('idCuentaDetalle').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    ).filter(saldo_absoluto__gt=0)
-
-    transacciones_pasivo_no_corriente = Transacion.objects.filter(idSubCuenta__idDeMayor__idRubro=pasivo_no_corriente).values('idSubCuenta').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    ).filter(saldo_absoluto__gt=0)
-    
-    transacciones_detalle_pasivo_no_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=pasivo_no_corriente).values('idCuentaDetalle').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    ).filter(saldo_absoluto__gt=0)
-
-
-
-    # Filtrar subcuentas y cuentas de detalle basadas en las transacciones filtradas
-    subcuentas_activo_corriente = SubCuenta.objects.filter(
-    idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_activo_corriente]).exclude(idSubCuenta=6)
-    cuentas_detalle_activo_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_activo_corriente])
-
-    subcuentas_activo_no_corriente = SubCuenta.objects.filter(idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_activo_no_corriente])
-    cuentas_detalle_activo_no_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_activo_no_corriente])
-
-    subcuentas_pasivo_corriente = SubCuenta.objects.filter(idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_pasivo_corriente])
-    cuentas_detalle_pasivo_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_pasivo_corriente])
-
-    subcuentas_pasivo_no_corriente = SubCuenta.objects.filter(idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_pasivo_no_corriente])
-    cuentas_detalle_pasivo_no_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_pasivo_no_corriente])
-
-    # Recuperando el resultado del estado de capital y redondeándolo a dos decimales
-    capitales_iniciales = request.session.get('capitales_iniciales', 0)
-    capitales_iniciales = Decimal(capitales_iniciales).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
-
-    # Calcular sumas de saldos para activos y pasivo + capital
-    total_activos = Decimal(sum(transaccion['saldo_absoluto'] for transaccion in transacciones_activo_corriente) + \
-                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_activo_corriente) + \
-                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_activo_no_corriente) + \
-                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_activo_no_corriente)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
-
-    total_pasivo_capital = Decimal(sum(transaccion['saldo_absoluto'] for transaccion in transacciones_pasivo_corriente) + \
-                       sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_pasivo_corriente) + \
-                       sum(transaccion['saldo_absoluto'] for transaccion in transacciones_pasivo_no_corriente) + \
-                       sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_pasivo_no_corriente) + \
-                       capitales_iniciales).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
-    
-    
-    # Obtener la información de la empresa y las fechas del periodo
-    nombre_empresa = obtener_info_empresa()
-    fecha_inicio, fecha_fin = obtener_fechas_periodo()
-
-    # Combinar listas de subcuentas y cuentas de detalle por rubro
-    subcuentas_corrientes = zip_longest(subcuentas_activo_corriente, subcuentas_pasivo_corriente)
-    cuentas_detalle_corrientes = zip_longest(cuentas_detalle_activo_corriente, cuentas_detalle_pasivo_corriente)
-
-    subcuentas_no_corrientes = zip_longest(subcuentas_activo_no_corriente, subcuentas_pasivo_no_corriente)
-    cuentas_detalle_no_corrientes = zip_longest(cuentas_detalle_activo_no_corriente, cuentas_detalle_pasivo_no_corriente)
-    
-    
-
-    context = {
-        'subcuentas_corrientes': subcuentas_corrientes,
-        'cuentas_detalle_corrientes': cuentas_detalle_corrientes,
-        'subcuentas_no_corrientes': subcuentas_no_corrientes,
-        'cuentas_detalle_no_corrientes': cuentas_detalle_no_corrientes,
-        'transacciones_activo_corriente': transacciones_activo_corriente,
-        'transacciones_detalle_activo_corriente': transacciones_detalle_activo_corriente,
-        'transacciones_activo_no_corriente': transacciones_activo_no_corriente,
-        'transacciones_detalle_activo_no_corriente': transacciones_detalle_activo_no_corriente,
-        'transacciones_pasivo_corriente': transacciones_pasivo_corriente,
-        'transacciones_detalle_pasivo_corriente': transacciones_detalle_pasivo_corriente,
-        'transacciones_pasivo_no_corriente': transacciones_pasivo_no_corriente,
-        'transacciones_detalle_pasivo_no_corriente': transacciones_detalle_pasivo_no_corriente,
-        'nombre_empresa': nombre_empresa,
-        'fecha_inicio': fecha_inicio,
-        'fecha_fin': fecha_fin,
-        'total_activos': total_activos,
-        'total_pasivo_capital': total_pasivo_capital,
-        'capitales_iniciales': capitales_iniciales,
-    }
-    
-    
-    if request.GET.get('format') == 'pdf':
-        # Renderizar el HTML como string
-        html_string = render_to_string("App_innovaSoft/balanceGeneral.html", context)
-
-        # Crear el PDF
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="balance_general.pdf"'
-        pisa_status = pisa.CreatePDF(html_string, dest=response,encoding='utf-8')
-
-        # Verificar si hubo un error al generar el PDF
-        if pisa_status.err:
-            return HttpResponse("Error al generar el PDF")
-
-        return response
-    
-    return render(request, "App_innovaSoft/balanceGeneral.html", context)
-
-
-
-
-
-
-def hojAjustes(request):
-    return render(request,"App_innovaSoft/hojAjustes.html")
-
-def estadoCapital(request):
-    subcuenta_codigos = ['3202.01', '4202.01', '1103.01','3101.01','3101.02']
-    cuenta_detalle_codigos = []
-
-    subcuentas = SubCuenta.objects.filter(codigoCuenta__in=subcuenta_codigos)
-    detalle_cuentas = CuentaDetalle.objects.filter(codigoCuenta__in=cuenta_detalle_codigos)
-
-
-    # Obtener la información de la empresa y las fechas del periodo
-    nombre_empresa = obtener_info_empresa()
-    fecha_inicio, fecha_fin = obtener_fechas_periodo()
-
-
-    # Obtenemos las transacciones y calculamos el saldo absoluto
-    subcuenta_transacciones = Transacion.objects.filter(idSubCuenta__in=subcuentas).values('idSubCuenta').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    )
-
-    cuenta_detalle_transacciones = Transacion.objects.filter(idCuentaDetalle__in=detalle_cuentas).values('idCuentaDetalle').annotate(
-        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
-    )
-
-    cuentas_data = []
-    saldo_3202_01 = 0  # Inicializamos para almacenar el saldo de 3202.01
-    disminuciones_total = 0
-    capitales_iniciales = 0
-    # Clasificamos las subcuentas
-    for subcuenta in subcuentas:
-        transaccion = next(
-            (item for item in subcuenta_transacciones if item['idSubCuenta'] == subcuenta.idSubCuenta),
-            {'saldo_absoluto': 0}
-        )
-
-        # Clasificación de saldo según el tipo de cuenta
-        if subcuenta.codigoCuenta == '1103.01':  # Disminuciones
-            saldo_inicial = aumentos = 0
-            disminuciones = transaccion['saldo_absoluto']
-            disminuciones_total += disminuciones
-        elif subcuenta.codigoCuenta == '3202.01':  # Saldo inicial
-            saldo_inicial = transaccion['saldo_absoluto']
-            saldo_3202_01 = saldo_inicial  # Guardamos el saldo para usar después
-            aumentos = disminuciones = 0
-        elif subcuenta.codigoCuenta == '4202.01':  # Aumentos
-            saldo_inicial = aumentos = 0
-            disminuciones = transaccion['saldo_absoluto']
-            disminuciones_total += disminuciones
-        elif subcuenta.codigoCuenta ==  '3101.01':  
-            disminuciones = aumentos = 0
-            saldo_inicial = transaccion['saldo_absoluto']
-            capitales_iniciales += saldo_inicial
-        elif subcuenta.codigoCuenta ==  '3101.02':  
-            disminuciones = aumentos = 0
-            saldo_inicial = transaccion['saldo_absoluto']     
-            capitales_iniciales += saldo_inicial
-        
-        cuentas_data.append({
-            'cuenta': subcuenta.nombre,
-            'saldo_inicial': saldo_inicial,
-            'aumentos': aumentos,
-            'disminuciones': disminuciones
-        })
-
-    
-    # Clasificamos las cuentas de detalle de manera similar, en el caso existan cuentas detalles que vayan a capital
-    for cuenta_detalle in detalle_cuentas:
-        transaccion = next(
-            (item for item in cuenta_detalle_transacciones if item['idCuentaDetalle'] == cuenta_detalle.idCuentaDetalle),
-            {'saldo_absoluto': 0}
-        )
-
-        if cuenta_detalle.codigoCuenta == '': 
-            saldo_inicial = transaccion['saldo_absoluto']
-            capitales_iniciales += saldo_inicial
-            aumentos = disminuciones = 0
-        elif cuenta_detalle.codigoCuenta == '': 
-            aumentos = disminuciones = 0
-            saldo_inicial = transaccion['saldo_absoluto']
-            capitales_iniciales += saldo_inicial
-
-           
-
-        cuentas_data.append({
-            'cuenta': cuenta_detalle.nombre,
-            'saldo_inicial': saldo_inicial,
-            'aumentos': aumentos,
-            'disminuciones': disminuciones
-        })
-    
-    
-    # Aseguramos que el resultado final sea positivo
-    total_final = saldo_3202_01 - disminuciones_total + capitales_iniciales
-    total_final = abs(total_final)  # Convertimos a valor absoluto
-
-    # Guardar capitales_iniciales en la sesión como float
-    request.session['capitales_iniciales'] = float(total_final)  # Convertimos a float
-
-
-   
-
-    # Verificamos si se solicita un PDF
-    if request.GET.get('format') == 'pdf':
-        # Renderizamos el HTML en un string
-        html_string = render_to_string('App_innovaSoft/estadoCapital.html', {
-            'cuentas_data': cuentas_data,
-            'total_final': total_final,
-            'nombre_empresa': nombre_empresa,  # Pasamos el nombre de la empresa
-            'fecha_inicio': fecha_inicio,       # Pasamos la fecha de inicio
-            'fecha_fin': fecha_fin,             # Pasamos la fecha de fin
-        })
-
-        # Generamos el PDF
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="estado_capital.pdf"'
-        pisa_status = pisa.CreatePDF(html_string, dest=response)
-
-        # Retornamos el PDF generado
-        if pisa_status.err:
-            return HttpResponse('Error al generar el PDF')
-        
-        return response
-
-    # Si no se solicita un PDF, no se devuelve nada
-    return HttpResponse('No se puede generar el PDF, por favor verifica la solicitud.')
-
-
-
+#METODO PARA EL LOGIN
 def login(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -774,7 +361,7 @@ def generar_estado_de_resultados(request):
 
     # Gastos Operativos (Agregar cuentas específicas)
     gastos_operativos = 0
-    cuentas_gasto_operativo = ["4102.01.01", "4102.02", "4102.03", "4102.04", "4102.05", "4102.06", "4102.08", "4102.10", "4101.03", "4102.01.02", "4102.01.03", "4102.01.04", "4102.01.05", "4102.01.06", "4102.01.07", "4102.01.08", "4102.01.09", "4102.01.10", "4102.02.01", "4102.02.02", "4102.02.03", "4102.02.04", "4102.03.01", "4102.03.02", "4102.03.03", "4102.03.04", "4102.03.05", "4102.03.06", "4102.03.07", "4102.03.08", "4102.04.01", "4102.04.02", "4102.04.03", "4102.04.04", "4102.05.01", "4102.06.01", "4102.08.01", "4102.08.02","4102.08.03", "4102.08.04", "4102.08.05"]
+    cuentas_gasto_operativo = ["4102.01.01", "4102.02", "4102.03", "4102.04", "4102.05", "4102.06", "4102.08", "4102.10", "4102.01.02", "4102.01.03", "4102.01.04", "4102.01.05", "4102.01.06", "4102.01.07", "4102.01.08", "4102.01.09", "4102.01.10", "4102.02.01", "4102.02.02", "4102.02.03", "4102.02.04", "4102.03.01", "4102.03.02", "4102.03.03", "4102.03.04", "4102.03.05", "4102.03.06", "4102.03.07", "4102.03.08", "4102.04.01", "4102.04.02", "4102.04.03", "4102.04.04", "4102.05.01", "4102.08.01", "4102.08.02","4102.08.03", "4102.08.04", "4102.08.05","4102.09.02"]
     
     for codigo in cuentas_gasto_operativo:
         transacciones = Transacion.objects.filter(
@@ -818,8 +405,15 @@ def generar_estado_de_resultados(request):
     # Impuesto y Utilidad Neta
     tasa_impuesto = Decimal(0.15)
     impuesto = utilidad_antes_impuesto * tasa_impuesto
-    utilidad_neta = utilidad_antes_impuesto 
-    registrar_utilidad_neta_y_perdidas(utilidad_neta)
+    if Transacion.objects.filter(idSubCuenta__codigoCuenta="2103.04").exists():
+        actualizar_impuesto(impuesto)
+    else:
+        registrar_impuesto(impuesto)
+    utilidad_neta = utilidad_antes_impuesto - impuesto
+    if Transacion.objects.filter(idSubCuenta__codigoCuenta="3202.01").exists() and Transacion.objects.filter(idSubCuenta__codigoCuenta="6101.01").exists():
+        actualizar_utilidad_neta_y_perdidas(utilidad_neta)
+    else:
+        registrar_utilidad_neta_y_perdidas(utilidad_neta)
     datos.append(["", "Impuesto (15%)", f"{impuesto:.2f}"])
     datos.append(["", "Utilidad Neta", f"{utilidad_neta:.2f}"])
 
@@ -854,6 +448,9 @@ def obtener_nombre_cuenta(codigo_cuenta):
         return ""
     
 #METODO PARA GUARDAR LA UTILIDAD DESPUES DE DESCARGAR EL ESTADO DE RESULTADOS
+
+#METODO PARA GUARDAR LA UTILIDAD DESPUES DE DESCARGAR EL ESTADO DE RESULTADOS
+
 def registrar_utilidad_neta_y_perdidas(utilidad_neta):
     """
     Registra la utilidad neta en la cuenta '3202.01' (Ejercicio Presente) y la cuenta '6101.01' (Pérdidas y Ganancias).
@@ -899,10 +496,193 @@ def registrar_utilidad_neta_y_perdidas(utilidad_neta):
     except Exception as e:
         print(f"Ocurrió un error al registrar las transacciones: {e}")
 
+def registrar_impuesto(impuesto):
+    """
+    Registra el valor del impuesto en la cuenta de 'Otros impuestos por pagar' (código '2103.04').
+    """
+    try:
+        with transaction.atomic():
+            # Verificar si existe la cuenta
+            cuenta_impuestos = SubCuenta.objects.get(codigoCuenta="2103.04")
+            
+            # Obtener el último ID en la tabla Transacion y sumar 1
+            ultimo_id = Transacion.objects.latest('idTransacion').idTransacion if Transacion.objects.exists() else 0
+            nuevo_id = ultimo_id + 1
+            
+            # Crear una nueva transacción
+            nueva_transaccion = Transacion.objects.create(
+                idTransacion=nuevo_id,
+                idSubCuenta=cuenta_impuestos,
+                debe=0,
+                haber=impuesto  # Se asigna el valor del impuesto en el haber
+            )
+            
+            # Confirmación de creación del registro
+            print("Transacción de impuesto registrada exitosamente con ID:", nueva_transaccion.idTransacion)
+
+    except SubCuenta.DoesNotExist:
+        print("Error: No se encontró la cuenta '2103.04' para 'Otros impuestos por pagar'.")
+    except Exception as e:
+        print(f"Ocurrió un error al registrar la transacción de impuesto: {e}")
 
 
+def actualizar_utilidad_neta_y_perdidas(utilidad_neta):
+    """
+    Actualiza la utilidad neta en la cuenta '3202.01' (Ejercicio Presente) y la cuenta '6101.01' (Pérdidas y Ganancias).
+    """
+    valor_abs_utilidad_neta = abs(utilidad_neta)
+    cuenta_ejercicio_presente = SubCuenta.objects.get(codigoCuenta="3202.01")
+    cuenta_perdidas_y_ganancias = SubCuenta.objects.get(codigoCuenta="6101.01")
+    
+    debe_ejercicio = valor_abs_utilidad_neta if utilidad_neta < 0 else 0
+    haber_ejercicio = valor_abs_utilidad_neta if utilidad_neta >= 0 else 0
+    debe_perdidas = valor_abs_utilidad_neta if utilidad_neta >= 0 else 0
+    haber_perdidas = valor_abs_utilidad_neta if utilidad_neta < 0 else 0
+
+    Transacion.objects.filter(idSubCuenta=cuenta_ejercicio_presente).update(
+        debe=debe_ejercicio, haber=haber_ejercicio
+    )
+    Transacion.objects.filter(idSubCuenta=cuenta_perdidas_y_ganancias).update(
+        debe=debe_perdidas, haber=haber_perdidas
+    )
+
+
+def actualizar_impuesto(impuesto):
+    """
+    Actualiza el valor del impuesto en la cuenta de 'Otros impuestos por pagar' (código '2103.04').
+    """
+    cuenta_impuestos = SubCuenta.objects.get(codigoCuenta="2103.04")
+    Transacion.objects.filter(idSubCuenta=cuenta_impuestos).update(
+        debe=0, haber=impuesto
+    )
+
+
+
+
+#METODO DE ESTADO DE CAPITAL
+def estadoCapital(request):
+    subcuenta_codigos = ['3202.01', '4202.01', '1103.01','3101.01','3101.02']
+    cuenta_detalle_codigos = []
+
+    subcuentas = SubCuenta.objects.filter(codigoCuenta__in=subcuenta_codigos)
+    detalle_cuentas = CuentaDetalle.objects.filter(codigoCuenta__in=cuenta_detalle_codigos)
+
+
+    # Obtener la información de la empresa y las fechas del periodo
+    nombre_empresa = obtener_info_empresa()
+    fecha_inicio, fecha_fin = obtener_fechas_periodo()
+
+
+    # Obtenemos las transacciones y calculamos el saldo absoluto
+    subcuenta_transacciones = Transacion.objects.filter(idSubCuenta__in=subcuentas).values('idSubCuenta').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    )
+
+    cuenta_detalle_transacciones = Transacion.objects.filter(idCuentaDetalle__in=detalle_cuentas).values('idCuentaDetalle').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    )
+
+    cuentas_data = []
+    saldo_3202_01 = 0  # Inicializamos para almacenar el saldo de 3202.01
+    disminuciones_total = 0
+    capitales_iniciales = 0
+    # Clasificamos las subcuentas
+    for subcuenta in subcuentas:
+        transaccion = next(
+            (item for item in subcuenta_transacciones if item['idSubCuenta'] == subcuenta.idSubCuenta),
+            {'saldo_absoluto': 0}
+        )
+
+        # Clasificación de saldo según el tipo de cuenta
+        if subcuenta.codigoCuenta == '1103.01':  # Disminuciones
+            saldo_inicial = aumentos = 0
+            disminuciones = transaccion['saldo_absoluto']
+            disminuciones_total += disminuciones
+        elif subcuenta.codigoCuenta == '3202.01':  # Saldo inicial
+            saldo_inicial = transaccion['saldo_absoluto']
+            saldo_3202_01 = saldo_inicial  # Guardamos el saldo para usar después
+            aumentos = disminuciones = 0
+        elif subcuenta.codigoCuenta == '4202.01':  # Aumentos
+            saldo_inicial = aumentos = 0
+            disminuciones = transaccion['saldo_absoluto']
+            disminuciones_total += disminuciones
+        elif subcuenta.codigoCuenta ==  '3101.01':  
+            disminuciones = aumentos = 0
+            saldo_inicial = transaccion['saldo_absoluto']
+            capitales_iniciales += saldo_inicial
+        elif subcuenta.codigoCuenta ==  '3101.02':  
+            disminuciones = aumentos = 0
+            saldo_inicial = transaccion['saldo_absoluto']     
+            capitales_iniciales += saldo_inicial
+        
+        cuentas_data.append({
+            'cuenta': subcuenta.nombre,
+            'saldo_inicial': saldo_inicial,
+            'aumentos': aumentos,
+            'disminuciones': disminuciones
+        })
 
     
+    # Clasificamos las cuentas de detalle de manera similar, en el caso existan cuentas detalles que vayan a capital
+    for cuenta_detalle in detalle_cuentas:
+        transaccion = next(
+            (item for item in cuenta_detalle_transacciones if item['idCuentaDetalle'] == cuenta_detalle.idCuentaDetalle),
+            {'saldo_absoluto': 0}
+        )
+
+        if cuenta_detalle.codigoCuenta == '': 
+            saldo_inicial = transaccion['saldo_absoluto']
+            capitales_iniciales += saldo_inicial
+            aumentos = disminuciones = 0
+        elif cuenta_detalle.codigoCuenta == '': 
+            aumentos = disminuciones = 0
+            saldo_inicial = transaccion['saldo_absoluto']
+            capitales_iniciales += saldo_inicial
+
+           
+
+        cuentas_data.append({
+            'cuenta': cuenta_detalle.nombre,
+            'saldo_inicial': saldo_inicial,
+            'aumentos': aumentos,
+            'disminuciones': disminuciones
+        })
+    
+    
+    # Aseguramos que el resultado final sea positivo
+    total_final = saldo_3202_01 - disminuciones_total + capitales_iniciales
+    total_final = abs(total_final)  # Convertimos a valor absoluto
+
+    # Guardar capitales_iniciales en la sesión como float
+    request.session['capitales_iniciales'] = float(total_final)  # Convertimos a float
+
+
+   
+
+    # Verificamos si se solicita un PDF
+    if request.GET.get('format') == 'pdf':
+        # Renderizamos el HTML en un string
+        html_string = render_to_string('App_innovaSoft/estadoCapital.html', {
+            'cuentas_data': cuentas_data,
+            'total_final': total_final,
+            'nombre_empresa': nombre_empresa,  # Pasamos el nombre de la empresa
+            'fecha_inicio': fecha_inicio,       # Pasamos la fecha de inicio
+            'fecha_fin': fecha_fin,             # Pasamos la fecha de fin
+        })
+
+        # Generamos el PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="estado_capital.pdf"'
+        pisa_status = pisa.CreatePDF(html_string, dest=response)
+
+        # Retornamos el PDF generado
+        if pisa_status.err:
+            return HttpResponse('Error al generar el PDF')
+        
+        return response
+
+    # Si no se solicita un PDF, no se devuelve nada
+    return HttpResponse('No se puede generar el PDF, por favor verifica la solicitud.')
 
 
 # Vistas CatalogoCuentas
@@ -956,6 +736,11 @@ def obtener_transacciones(request):
     else:
         return JsonResponse({'error': 'No se ha seleccionado una cuenta válida.'})
 
+# Vistas CatalogoCuentas
+def obtener_catalogo_cuentas(request):
+    CatalogoCuentas = SubCuenta.objects.all()
+    cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
+    return JsonResponse(cuentas_json, safe=False)
 
 
 #calcular totales
@@ -1014,6 +799,308 @@ def calcular_totales(request):
         'perdidas_ganancia': float(perdidas_ganancia or 0)
     })
 
+#METODO PARA TENER INFORMACION DE LA EMPRESA
+
+def obtener_info_empresa():
+    info_empresa = Informacion.objects.first()  # Obtener la primera entrada
+    return info_empresa.nombreEmpresa if info_empresa else "Nombre de la Empresa"
+
+def obtener_fechas_periodo():
+    periodo = PeriodoContable.objects.first()  # Ajusta esto según tu lógica
+    if periodo:
+        fecha_inicio = periodo.fechaInicioDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
+        fecha_fin = periodo.fechaFinDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
+        return fecha_inicio, fecha_fin
+    return "Fecha de Inicio", "Fecha de Fin"
+
+
+#METODO PARA GENERAR EL PDF DEL BALANCE GENERAL
+
+def balanceGeneral(request):
+    # Obtener rubros específicos
+    activo_corriente = RubroDeAgrupacion.objects.filter(nombre="ACTIVO CORRIENTE").first()
+    activo_no_corriente = RubroDeAgrupacion.objects.filter(nombre="ACTIVO NO CORRIENTE").first()
+    pasivo_corriente = RubroDeAgrupacion.objects.filter(nombre="PASIVO CORRIENTE").first()
+    pasivo_no_corriente = RubroDeAgrupacion.objects.filter(nombre="PASIVO NO CORRIENTE").first()
+
+    # Filtrar subcuentas y cuentas de detalle con transacciones con saldo distinto de cero
+    transacciones_activo_corriente = Transacion.objects.filter(
+    idSubCuenta__idDeMayor__idRubro=activo_corriente).exclude(idSubCuenta__idSubCuenta=6).values('idSubCuenta').annotate(
+    saldo_absoluto=Abs(Sum('debe') - Sum('haber'))).filter(saldo_absoluto__gt=0)
+
+    transacciones_detalle_activo_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=activo_corriente).values('idCuentaDetalle').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    ).filter(saldo_absoluto__gt=0)
+
+    transacciones_activo_no_corriente = Transacion.objects.filter(idSubCuenta__idDeMayor__idRubro=activo_no_corriente).values('idSubCuenta').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    ).filter(saldo_absoluto__gt=0)
+    
+    transacciones_detalle_activo_no_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=activo_no_corriente).values('idCuentaDetalle').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    ).filter(saldo_absoluto__gt=0)
+
+    transacciones_pasivo_corriente = Transacion.objects.filter(idSubCuenta__idDeMayor__idRubro=pasivo_corriente).values('idSubCuenta').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    ).filter(saldo_absoluto__gt=0)
+    
+    transacciones_detalle_pasivo_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=pasivo_corriente).values('idCuentaDetalle').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    ).filter(saldo_absoluto__gt=0)
+
+    transacciones_pasivo_no_corriente = Transacion.objects.filter(idSubCuenta__idDeMayor__idRubro=pasivo_no_corriente).values('idSubCuenta').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    ).filter(saldo_absoluto__gt=0)
+    
+    transacciones_detalle_pasivo_no_corriente = Transacion.objects.filter(idCuentaDetalle__idCuenta__idDeMayor__idRubro=pasivo_no_corriente).values('idCuentaDetalle').annotate(
+        saldo_absoluto=Abs(Sum('debe') - Sum('haber'))
+    ).filter(saldo_absoluto__gt=0)
+
+
+
+    # Filtrar subcuentas y cuentas de detalle basadas en las transacciones filtradas
+    subcuentas_activo_corriente = SubCuenta.objects.filter(
+    idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_activo_corriente]).exclude(idSubCuenta=6)
+    cuentas_detalle_activo_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_activo_corriente])
+
+    subcuentas_activo_no_corriente = SubCuenta.objects.filter(idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_activo_no_corriente])
+    cuentas_detalle_activo_no_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_activo_no_corriente])
+
+    subcuentas_pasivo_corriente = SubCuenta.objects.filter(idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_pasivo_corriente])
+    cuentas_detalle_pasivo_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_pasivo_corriente])
+
+    subcuentas_pasivo_no_corriente = SubCuenta.objects.filter(idSubCuenta__in=[t['idSubCuenta'] for t in transacciones_pasivo_no_corriente])
+    cuentas_detalle_pasivo_no_corriente = CuentaDetalle.objects.filter(idCuentaDetalle__in=[t['idCuentaDetalle'] for t in transacciones_detalle_pasivo_no_corriente])
+
+    # Recuperando el resultado del estado de capital y redondeándolo a dos decimales
+    capitales_iniciales = request.session.get('capitales_iniciales', 0)
+    capitales_iniciales = Decimal(capitales_iniciales).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+
+    # Calcular sumas de saldos para activos y pasivo + capital
+    total_activos = Decimal(sum(transaccion['saldo_absoluto'] for transaccion in transacciones_activo_corriente) + \
+                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_activo_corriente) + \
+                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_activo_no_corriente) + \
+                sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_activo_no_corriente)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+
+    total_pasivo_capital = Decimal(sum(transaccion['saldo_absoluto'] for transaccion in transacciones_pasivo_corriente) + \
+                       sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_pasivo_corriente) + \
+                       sum(transaccion['saldo_absoluto'] for transaccion in transacciones_pasivo_no_corriente) + \
+                       sum(transaccion['saldo_absoluto'] for transaccion in transacciones_detalle_pasivo_no_corriente) + \
+                       capitales_iniciales).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+    
+    
+    # Obtener la información de la empresa y las fechas del periodo
+    nombre_empresa = obtener_info_empresa()
+    fecha_inicio, fecha_fin = obtener_fechas_periodo()
+
+    # Combinar listas de subcuentas y cuentas de detalle por rubro
+    subcuentas_corrientes = zip_longest(subcuentas_activo_corriente, subcuentas_pasivo_corriente)
+    cuentas_detalle_corrientes = zip_longest(cuentas_detalle_activo_corriente, cuentas_detalle_pasivo_corriente)
+
+    subcuentas_no_corrientes = zip_longest(subcuentas_activo_no_corriente, subcuentas_pasivo_no_corriente)
+    cuentas_detalle_no_corrientes = zip_longest(cuentas_detalle_activo_no_corriente, cuentas_detalle_pasivo_no_corriente)
+    
+    
+
+    context = {
+        'subcuentas_corrientes': subcuentas_corrientes,
+        'cuentas_detalle_corrientes': cuentas_detalle_corrientes,
+        'subcuentas_no_corrientes': subcuentas_no_corrientes,
+        'cuentas_detalle_no_corrientes': cuentas_detalle_no_corrientes,
+        'transacciones_activo_corriente': transacciones_activo_corriente,
+        'transacciones_detalle_activo_corriente': transacciones_detalle_activo_corriente,
+        'transacciones_activo_no_corriente': transacciones_activo_no_corriente,
+        'transacciones_detalle_activo_no_corriente': transacciones_detalle_activo_no_corriente,
+        'transacciones_pasivo_corriente': transacciones_pasivo_corriente,
+        'transacciones_detalle_pasivo_corriente': transacciones_detalle_pasivo_corriente,
+        'transacciones_pasivo_no_corriente': transacciones_pasivo_no_corriente,
+        'transacciones_detalle_pasivo_no_corriente': transacciones_detalle_pasivo_no_corriente,
+        'nombre_empresa': nombre_empresa,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'total_activos': total_activos,
+        'total_pasivo_capital': total_pasivo_capital,
+        'capitales_iniciales': capitales_iniciales,
+    }
+    
+    
+    if request.GET.get('format') == 'pdf':
+        # Renderizar el HTML como string
+        html_string = render_to_string("App_innovaSoft/balanceGeneral.html", context)
+
+        # Crear el PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="balance_general.pdf"'
+        pisa_status = pisa.CreatePDF(html_string, dest=response,encoding='utf-8')
+
+        # Verificar si hubo un error al generar el PDF
+        if pisa_status.err:
+            return HttpResponse("Error al generar el PDF")
+
+        return response
+    
+    return render(request, "App_innovaSoft/balanceGeneral.html", context)
+
+
+
+
+#METODO PARA CREAR CUENTAS
+
+# Vista para agregar nueva cuenta al catálogo
+def nuevaCuenta(request):
+    # Obtener todos los tipos de cuentas, rubros y cuentas mayores
+    tipos_cuenta = GrupoCuenta.objects.all()
+    rubros = RubroDeAgrupacion.objects.all()
+    cuentas_mayor = CuentaDeMayor.objects.all()
+
+    if request.method == 'POST':
+        subcuenta_nombre = request.POST.get('subcuenta')
+        cuenta_mayor_id = request.POST.get('cuentaMayor')
+        cuenta_detalle_nombre = request.POST.get('cuentaDetalle')  # Recibir el nombre de la cuenta detalle
+        cuenta_detalle_nombre2 = request.POST.get('cuentaDetalle2')  # Recibir el nombre de la cuenta detalle2
+        subcuenta_existente_id = request.POST.get('subcuentaExistente')  # Obtener la subcuenta seleccionada
+
+        # Validación: asegurarse de que se proporcionen los datos necesarios
+        if subcuenta_nombre and cuenta_mayor_id:
+            try:
+                # Obtener el idDeMayor como entero
+                id_mayor = int(cuenta_mayor_id)
+                # Obtener el objeto CuentaDeMayor
+                cuenta_mayor = CuentaDeMayor.objects.get(idDeMayor=id_mayor)
+                prefijo = cuenta_mayor.codigoCuenta[:4]  # Obtener los primeros cuatro dígitos del codigoCuenta
+                
+                # ------------------- SECCIÓN DE SUBCUENTAS -------------------
+                # Obtener el último idSubCuenta registrado en la tabla
+                ultimo_id_subcuenta = SubCuenta.objects.aggregate(Max('idSubCuenta'))['idSubCuenta__max']
+                nuevo_id_subcuenta = (ultimo_id_subcuenta + 1) if ultimo_id_subcuenta is not None else 1  # Empezar desde 1 si no hay registros
+                
+                # Generar el siguiente sufijo numérico basado en las subcuentas existentes
+                subcuentas = SubCuenta.objects.filter(idDeMayor_id=id_mayor)
+                ultimo_codigo_subcuenta = subcuentas.aggregate(Max('codigoCuenta'))['codigoCuenta__max']
+                nuevo_sufijo_subcuenta = "01"  # Valor por defecto
+                
+                if ultimo_codigo_subcuenta:
+                    ultimo_sufijo_subcuenta = int(ultimo_codigo_subcuenta.split('.')[1])
+                    nuevo_sufijo_subcuenta = f"{ultimo_sufijo_subcuenta + 1:02d}" if ultimo_sufijo_subcuenta < 99 else None
+                
+                # Validación de límite en el sufijo
+                if not nuevo_sufijo_subcuenta:
+                    messages.error(request, 'No se puede crear más subcuentas para esta cuenta de mayor.')
+                    return redirect('nuevaCuenta')
+
+                # Crear y guardar la nueva subcuenta
+                codigo_cuenta = f"{prefijo}.{nuevo_sufijo_subcuenta}"
+                subcuenta = SubCuenta(
+                    idSubCuenta=nuevo_id_subcuenta,  # Usar el ID generado manualmente
+                    idDeMayor_id=cuenta_mayor_id,
+                    codigoCuenta=codigo_cuenta,
+                    nombre=subcuenta_nombre
+                )
+                subcuenta.save()
+                # ------------------------------------------------------------
+
+                # ------------------- SECCIÓN DE CUENTAS DETALLE -------------------
+                # Verificar si se debe crear una Cuenta Detalle desde el input 1 o desde la subcuenta existente
+                if cuenta_detalle_nombre:
+                    # Crear la cuenta detalle con el nombre ingresado
+                    cuenta_detalle = crearCuentaDetalle(subcuenta, cuenta_detalle_nombre)
+                    messages.success(request, f'Subcuenta "{subcuenta_nombre}" y Cuenta Detalle "{cuenta_detalle_nombre}" creadas con éxito.')
+                else:
+                    messages.error(request, 'Debe proporcionar el nombre de la Cuenta Detalle o seleccionar una Subcuenta existente para crearla.')
+
+            except CuentaDeMayor.DoesNotExist:
+                messages.error(request, 'La Cuenta Mayor seleccionada no existe.')
+            except Exception as e:
+                messages.error(request, f'Ocurrió un error inesperado: {e}')
+
+        # Si se intenta crear solo una cuenta detalle, se puede omitir la validación de subcuenta y cuenta mayor
+        elif cuenta_detalle_nombre2 and subcuenta_existente_id:
+            # Aquí va la lógica para crear la cuenta detalle desde la subcuenta existente
+            try:
+                subcuenta_existente = SubCuenta.objects.get(idSubCuenta=subcuenta_existente_id)
+                cuenta_detalle = crearCuentaDetalle(subcuenta_existente, cuenta_detalle_nombre2)
+                messages.success(request, f'Cuenta Detalle "{cuenta_detalle_nombre2}" creada con éxito desde la Subcuenta seleccionada.')
+            except SubCuenta.DoesNotExist:
+                messages.error(request, 'La Subcuenta seleccionada no existe.')
+
+        else:
+            messages.error(request, 'Debe ingresar el nombre de la Subcuenta y seleccionar la Cuenta Mayor, o proporcionar el nombre de la Cuenta Detalle y seleccionar una Subcuenta existente.')
+
+        return redirect('CatalogoCuentas')
+
+    return render(request, 'App_innovaSoft/nuevaCuenta.html', {
+        'tipos_cuenta': tipos_cuenta,
+        'rubros': rubros,
+        'cuentas_mayor': cuentas_mayor,
+         'subcuentas': SubCuenta.objects.all(),  # Asegúrate de que esto siempre esté actualizado
+    })
+
+def crearCuentaDetalle(subcuenta, nombre):
+    # Obtener el último idCuentaDetalle registrado
+    ultimo_id_cuenta_detalle = CuentaDetalle.objects.aggregate(Max('idCuentaDetalle'))['idCuentaDetalle__max']
+    nuevo_id_cuenta_detalle = (ultimo_id_cuenta_detalle + 1) if ultimo_id_cuenta_detalle is not None else 1  # Empezar desde 1 si no hay registros
+
+    # Obtener el último código de CuentaDetalle para generar el nuevo código
+    ultimo_codigo_cuenta_detalle = CuentaDetalle.objects.filter(idCuenta=subcuenta).aggregate(Max('codigoCuenta'))['codigoCuenta__max']
+
+    # Generar el siguiente sufijo numérico basado en el último código de CuentaDetalle
+    nuevo_sufijo_detalle = "01"  # Valor por defecto
+    if ultimo_codigo_cuenta_detalle:
+        ultimo_sufijo_detalle = int(ultimo_codigo_cuenta_detalle.split('.')[-1])
+        nuevo_sufijo_detalle = f"{ultimo_sufijo_detalle + 1:02d}" if ultimo_sufijo_detalle < 99 else None
+
+    # Validación de límite en el sufijo
+    if not nuevo_sufijo_detalle:
+        raise Exception('No se puede crear más cuentas detalle para esta subcuenta.')
+
+    # Crear el código para la Cuenta Detalle basado en el código de la SubCuenta
+    nuevo_codigo_cuenta_detalle = f"{subcuenta.codigoCuenta}.{nuevo_sufijo_detalle}"
+
+    # Crear y guardar la nueva cuenta detalle
+    cuenta_detalle = CuentaDetalle(
+        idCuenta=subcuenta,  # Relacionar con la subcuenta
+        idCuentaDetalle=nuevo_id_cuenta_detalle,  # Usar el ID generado manualmente
+        codigoCuenta=nuevo_codigo_cuenta_detalle,
+        nombre=nombre 
+    )
+    cuenta_detalle.save()
+    return cuenta_detalle
+
+#filtrado combobox
+def get_rubros(request, tipo_id):
+    rubros = RubroDeAgrupacion.objects.filter(idGrupoCuenta_id=tipo_id).values('idRubro', 'nombre')
+    return JsonResponse(list(rubros), safe=False)
+
+def get_cuentas_mayor(request, rubro_id):
+    cuentas_mayor = CuentaDeMayor.objects.filter(idRubro_id=rubro_id).values('idDeMayor', 'nombre')
+    return JsonResponse(list(cuentas_mayor), safe=False)
+
+#funciones para usar en balance general y estado de capital
+
+def obtener_info_empresa():
+    info_empresa = Informacion.objects.first()  # Obtener la primera entrada
+    return info_empresa.nombreEmpresa if info_empresa else "Nombre de la Empresa"
+
+def obtener_fechas_periodo():
+    periodo = PeriodoContable.objects.first()  # Ajusta esto según tu lógica
+    if periodo:
+        fecha_inicio = periodo.fechaInicioDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
+        fecha_fin = periodo.fechaFinDePeriodo.strftime("%d de %B de %Y").lstrip('0').replace('  ', ' ')
+        return fecha_inicio, fecha_fin
+    return "Fecha de Inicio", "Fecha de Fin"
+
+#filtrado combobox
+def get_rubros(request, tipo_id):
+    rubros = RubroDeAgrupacion.objects.filter(idGrupoCuenta_id=tipo_id).values('idRubro', 'nombre')
+    return JsonResponse(list(rubros), safe=False)
+
+def get_cuentas_mayor(request, rubro_id):
+    cuentas_mayor = CuentaDeMayor.objects.filter(idRubro_id=rubro_id).values('idDeMayor', 'nombre')
+    return JsonResponse(list(cuentas_mayor), safe=False)
+
+
+#vistas orden de trabajo
+# Vista para obtener departamentos
 
 #vistas orden de trabajo
 # Vista para obtener departamentos
