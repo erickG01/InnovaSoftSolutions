@@ -26,7 +26,6 @@ urlpatterns = [
     path('CatalogoCuentas/', views.tipos_cuentas, name="CatalogoCuentas"),
     path('', views.home, name='home'),  # Ruta para la raíz
     path('Costos/',views.Costos,name="costos"),
-    path('HojAjustes/',views.hojAjustes,name="hojAjustes"),
     path('transacciones/', views.transaccion_view, name='transaccion'),  # Transacciones
     #path('agregar/',views.agregar_transaccion, name='agregar_transaccion'),
     path('login/', views.login,name="login"),
@@ -45,7 +44,11 @@ urlpatterns = [
     path('get_rubros/<int:tipo_id>/', get_rubros, name='get_rubros'),
     path('get_cuentas_mayor/<int:rubro_id>/', get_cuentas_mayor, name='get_cuentas_mayor'),
     path('costos/', views.calcular_costos_indirectos, name='costos'),
-    
+    path('api/departamentos/', views.obtener_departamentos, name='obtener_departamentos'),
+    path('api/empleados/<int:departamento_id>/', views.obtener_empleados, name='obtener_empleados'),
+    path('guardar_orden/', views.guardar_orden_trabajo, name='guardar_orden'),
+    path('get-orden-data/<int:orden_id>/', views.get_orden_data, name='get_orden_data'),
+  
 
 ]
 
