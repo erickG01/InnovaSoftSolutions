@@ -50,8 +50,7 @@ urlpatterns = [
     path('api/departamentos/', views.obtener_departamentos, name='obtener_departamentos'),
     path('api/empleados/<int:departamento_id>/', views.obtener_empleados, name='obtener_empleados'),
     path('guardar_orden/', views.guardar_orden_trabajo, name='guardar_orden'),
-    path('get-orden-data/<int:orden_id>/', views.get_orden_data, name='get_orden_data'),
-  
+    path('get-orden-data/<int:orden_id>/', views.get_orden_data, name='get_orden_data'), 
 
 ]
 

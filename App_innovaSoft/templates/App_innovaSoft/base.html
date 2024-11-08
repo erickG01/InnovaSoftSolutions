@@ -7,32 +7,75 @@
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+    <script>
+        // Función para actualizar la fecha y habilitar/deshabilitar las opciones
+        function actualizarFecha() {
+            const fechaInput = document.getElementById("fecha");
+            const fechaSeleccionada = fechaInput.value;
+            const opcionesDesbloquear = document.querySelectorAll(".desbloqueable");
+
+            // Guardar la fecha seleccionada en Local Storage
+            localStorage.setItem("fechaSeleccionada", fechaSeleccionada);
+
+            // Formato esperado para comparación
+            const fechaObjetivo = "2024-12-31";
+
+            // Habilitar o deshabilitar opciones en base a la fecha seleccionada
+            opcionesDesbloquear.forEach(opcion => {
+                opcion.classList.toggle("disabled", fechaSeleccionada !== fechaObjetivo);
+            });
+        }
+
+        // Función para cargar la fecha desde Local Storage o usar la fecha actual
+        function cargarFechaActual() {
+            const fechaInput = document.getElementById("fecha");
+            const fechaGuardada = localStorage.getItem("fechaSeleccionada");
+            const hoy = new Date().toISOString().split('T')[0];
+
+            // Usar la fecha guardada en Local Storage si existe, de lo contrario usar la fecha de hoy
+            fechaInput.value = fechaGuardada || hoy;
+            actualizarFecha(); // Verifica la fecha cargada para habilitar/deshabilitar opciones
+        }
+    </script>
 </head>
-<body>
-      <!--Navegación-->
-      <nav class="navbar navbar-expand-lg bg-dark navbar-dark  fixed-top">
+<body onload="cargarFechaActual()">
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark fixed-top">
         <div class="container-fluid">
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link text-light" href="{% url 'inicio' %}">Inicio</a></li>
                     <li class="nav-item"><a class="nav-link text-light" href="{% url 'CatalogoCuentas' %}">Catalogo de Cuentas</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="{% url 'libroMayor' %}">Libros contables</a></li>
                     <li class="nav-item"><a class="nav-link text-light" href="{% url 'transaccion' %}">Transacciones</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="{% url 'costos' %}">Costos</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="{%url 'inventario' %}">Inventario</a></li>
-                    <li class="nav-item"><a class="nav-link text-light" href="{% url 'estadoFinancieros' %}">Estados Financieros</a></li>
+                    <!-- Libros Mayor y Estados Financieros, con clase "desbloqueable" -->
+                    <li class="nav-item">
+                        <a class="nav-link text-light desbloqueable disabled" href="{% url 'libroMayor' %}">
+                            Libros Mayor
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-light desbloqueable disabled" href="{% url 'estadoFinancieros' %}">
+                            Estados Financieros
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="nav-item"><a class="nav-link text-light" href="{% url 'inventario' %}">Inventario</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="{% url 'costos' %}">Costos</a></li>  
                 </ul>
             </div>
+            
+            <!-- Mostrar y seleccionar la fecha -->
             <div class="d-flex align-items-center">
-                <a class="nav-link text-light" href="#">
-                    <i class="bi bi-person-circle" ></i> <!-- Ícono de Bootstrap -->
-                    InnovaSoft Solutions
-                    <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar Sesión</a>
-                </a>
+                <input type="date" id="fecha" class="form-control form-control-sm" style="width: 150px; margin-right: 10px;" onchange="actualizarFecha()">
+                <a href="{% url 'logout' %}" class="btn btn-danger btn-sm ml-2">Cerrar Sesión</a>
             </div>
         </div>
     </nav>
     <div style="padding-top: 56px;"></div>
-    {%block content%}{%endblock%}
+    {% block content %}{% endblock %}
 </body>
 </html>
+
+
+
