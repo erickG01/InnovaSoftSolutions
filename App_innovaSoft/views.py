@@ -195,6 +195,8 @@ def transaccion_view(request):
 
 
 #METODO PARA GENERAL EL BALANCE DE COMPROBACION
+
+
 def generar_balance_de_comprobacion(request):
     # Crear el archivo PDF
     nombre_pdf = "balance_de_comprobacion.pdf"
@@ -246,31 +248,59 @@ def generar_balance_de_comprobacion(request):
 
     # Crear la tabla con datos de balance de comprobación
     datos = [["Código", "Cuenta", "Debe", "Haber"]]  # Encabezados de la tabla
-    total_debe = 0
-    total_haber = 0
+    total_debe = Decimal("0.00")
+    total_haber = Decimal("0.00")
 
     # Obtener transacciones y calcular totales
     transacciones = Transacion.objects.all()
+    saldos = {}
+
+    # Procesar cada transacción para calcular el saldo
     for transaccion in transacciones:
-        cuenta_nombre = ""
-        cuenta_codigo = ""
-        
         if transaccion.idSubCuenta:
-            cuenta_nombre = transaccion.idSubCuenta.nombre
-            cuenta_codigo = transaccion.idSubCuenta.codigoCuenta
+            cuenta = transaccion.idSubCuenta
+            cuenta_nombre = cuenta.nombre
+            cuenta_codigo = cuenta.codigoCuenta
+            grupo_naturaleza = cuenta.idDeMayor.idRubro.idGrupoCuenta.nombre
         elif transaccion.idCuentaDetalle:
-            cuenta_nombre = transaccion.idCuentaDetalle.nombre
-            cuenta_codigo = transaccion.idCuentaDetalle.codigoCuenta
+            cuenta = transaccion.idCuentaDetalle
+            cuenta_nombre = cuenta.nombre
+            cuenta_codigo = cuenta.codigoCuenta
+            grupo_naturaleza = cuenta.idCuenta.idDeMayor.idRubro.idGrupoCuenta.nombre
         else:
             cuenta_nombre = "Cuenta desconocida"
             cuenta_codigo = "Código desconocido"
-        
+            grupo_naturaleza = None
+
         # Valores de debe y haber
-        debe = transaccion.debe
-        haber = transaccion.haber
-        datos.append([cuenta_codigo, cuenta_nombre, f"{debe:.2f}", f"{haber:.2f}"])
-        total_debe += debe
-        total_haber += haber
+        debe = transaccion.debe or Decimal("0.00")
+        haber = transaccion.haber or Decimal("0.00")
+        saldo = debe - haber
+
+        # Acumular saldo en el diccionario de saldos
+        if cuenta_codigo not in saldos:
+            saldos[cuenta_codigo] = {"nombre": cuenta_nombre, "saldo": Decimal("0.00"), "naturaleza": grupo_naturaleza}
+        
+        saldos[cuenta_codigo]["saldo"] += saldo
+
+    # Procesar el saldo para cada cuenta y determinar si se coloca en "Debe" o "Haber"
+    for codigo, cuenta_info in saldos.items():
+        cuenta_nombre = cuenta_info["nombre"]
+        saldo = cuenta_info["saldo"]
+        naturaleza = cuenta_info["naturaleza"]
+
+        # Clasificar el saldo según la naturaleza de la cuenta
+        if naturaleza in ["ACTIVO", "CUENTAS DE RESULTADO DEUDORAS"]:
+            # Saldo en el debe
+            datos.append([codigo, cuenta_nombre, f"{saldo:.2f}", "0.00"])
+            total_debe += saldo
+        elif naturaleza in ["PASIVO", "PATRIMONIO", "CUENTAS DE RESULTADO ACREEDORAS"]:
+            # Saldo en el haber
+            datos.append([codigo, cuenta_nombre, "0.00", f"{abs(saldo):.2f}"])
+            total_haber += abs(saldo)
+        else:
+            # Si la naturaleza es desconocida o no se clasifica, colocar el saldo en ambas columnas
+            datos.append([codigo, cuenta_nombre, f"{saldo:.2f}", f"{abs(saldo):.2f}"])
 
     # Agregar fila de totales
     datos.append(["", "Total", f"{total_debe:.2f}", f"{total_haber:.2f}"])
