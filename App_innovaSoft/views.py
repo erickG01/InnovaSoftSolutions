@@ -24,6 +24,7 @@ from django.db.models import Max
 from django.urls import path
 from decimal import Decimal, ROUND_HALF_UP
 from django.views.decorators.http import require_POST
+
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
@@ -1274,4 +1275,7 @@ def get_orden_data(request, orden_id):
         return JsonResponse(data)
     except OrdenTrabajo.DoesNotExist:
         return JsonResponse({'error': 'Orden no encontrada'}, status=404)
+
+
+
 
