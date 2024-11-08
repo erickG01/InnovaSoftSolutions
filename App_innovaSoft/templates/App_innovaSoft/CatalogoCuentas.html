@@ -24,7 +24,7 @@
                 <div class="col-md-4">
                     <label for="tipoCuenta" class="form-label">Tipo de Cuenta</label>
                     <select id="tipoCuenta" name="tipoCuenta" class="form-select">
-                        <option value="">TODAS</option>
+                        <option value="">Seleccione un Tipo de Cuenta</option>
                         {% for tipo in tipos_cuenta %}
                             <option value="{{ tipo.idGrupoCuenta }}" {% if tipo.idGrupoCuenta|stringformat:"s" == request.GET.tipoCuenta %}selected{% endif %}>
                                 {{ tipo.nombre }}
@@ -35,39 +35,27 @@
                 <div class="col-md-4">
                     <label for="rubro" class="form-label">Rubro</label>
                     <select id="rubro" name="rubro" class="form-select">
-                        <option value="">TODAS</option>
-                        {% for rubro in rubros %}
-                            <option value="{{ rubro.idRubro }}" {% if rubro.idRubro|stringformat:"s" == request.GET.rubro %}selected{% endif %}>
-                                {{ rubro.nombre }}
-                            </option>
-                        {% endfor %}
+                        <option value="">Seleccione un Rubro</option>
+                        <!-- Las opciones se llenarán dinámicamente -->
                     </select>
                 </div>
                 <div class="col-md-4">
                     <label for="cuentaMayor" class="form-label">Cuenta Mayor</label>
                     <select id="cuentaMayor" name="cuentaMayor" class="form-select">
-                        <option value="">TODAS</option>
-                        {% for cuenta in cuentas_mayor %}
-                            <option value="{{ cuenta.idDeMayor }}" {% if cuenta.idDeMayor|stringformat:"s" == request.GET.cuentaMayor %}selected{% endif %}>
-                                {{ cuenta.nombre }}
-                            </option>
-                        {% endfor %}
+                        <option value="">Seleccione una Cuenta Mayor</option>
+                        <!-- Las opciones se llenarán dinámicamente -->
                     </select>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">Filtrar</button>
         </form>
 
-        <!-- Búsqueda rápida y botones -->
+
+        <!-- Botones -->
         <div class="row mb-4 mt-4">
             <div class="col-md-6">
                 <label for="busqueda" class="form-label">Cuentas:</label>
-                <div class="input-group">
-                    <input type="text" id="busqueda" class="form-control" placeholder="Búsqueda rápida">
-                    <span class="input-group-text">
-                        <i class="bi bi-search"></i>
-                    </span>
-                </div>
+                
             </div>
             <div class="col-md-6 d-flex justify-content-end">
                 <div class="mt-4">
@@ -78,99 +66,154 @@
         </div>
 
         <!-- Tabla -->
-<table class="table table-bordered table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Tipo de Cuenta</th>
-            <th>Saldo</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for subcuenta in page_obj %}
-        <!-- Fila de Subcuenta -->
-        <tr>
-            <td>{{ subcuenta.codigoCuenta }}</td>
-            <td>{{ subcuenta.nombre }}</td>
-            <td>{{ subcuenta.idDeMayor.idRubro.idGrupoCuenta.nombre}}</td>
-            <td>
-                {% if subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 1 or subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 4 %}
-                    Deudor
-                {% elif subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 2 or subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 3 or subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 5 %}
-                    Acreedor
-                {% else %}
-                    <!-- Sin valor para idGrupo 6 -->
-                {% endif %}
-            </td>
-        </tr>
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Tipo de Cuenta</th>
+                    <th>Saldo</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for subcuenta in page_obj %}
+                <!-- Fila de Subcuenta -->
+                <tr>
+                    <td>{{ subcuenta.codigoCuenta }}</td>
+                    <td>{{ subcuenta.nombre }}</td>
+                    <td>{{ subcuenta.idDeMayor.idRubro.idGrupoCuenta.nombre}}</td>
+                    <td>
+                        {% if subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 1 or subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 4 %}
+                            Deudor
+                        {% elif subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 2 or subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 3 or subcuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 5 %}
+                            Acreedor
+                        {% else %}
+                            <!-- Sin valor para idGrupo 6 -->
+                        {% endif %}
+                    </td>
+                </tr>
 
-        <!-- Detalles como cuentas secundarias -->
-        {% for detalle in subcuenta.detalles.all %}
-            <tr class="detalle-cuenta">
-                <td class="ps-5">{{ detalle.codigoCuenta }}</td>
-                <td>{{ detalle.nombre }}</td>
-                <td>{{ detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.nombre}}</td>
-                <td>
-                    {% if detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 1 or detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 4 %}
-                        Deudor
-                    {% elif detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 2 or detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 3 or detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 5 %}
-                        Acreedor
-                    {% else %}
-                        <!-- Sin valor para idGrupo 6 -->
-                    {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
-    {% empty %}
-        <tr>
-            <td colspan="4" class="text-center">No se encontraron subcuentas.</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-
-<!-- Controles de paginación -->
-<div class="d-flex justify-content-center mt-4">
-    <nav aria-label="Page navigation">
-        <ul class="pagination">
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1">Primera</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
-                </li>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <li class="page-item active" aria-current="page">
-                        <span class="page-link">{{ num }}</span>
-                    </li>
-                {% else %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}{% if request.GET.tipoCuenta %}&tipoCuenta={{ request.GET.tipoCuenta }}{% endif %}{% if request.GET.rubro %}&rubro={{ request.GET.rubro }}{% endif %}{% if request.GET.cuentaMayor %}&cuentaMayor={{ request.GET.cuentaMayor }}{% endif %}">{{ num }}</a>
-                    </li>
-                {% endif %}
+                <!-- Detalles como cuentas secundarias -->
+                {% for detalle in subcuenta.detalles.all %}
+                    <tr class="detalle-cuenta">
+                        <td class="ps-5">{{ detalle.codigoCuenta }}</td>
+                        <td>{{ detalle.nombre }}</td>
+                        <td>{{ detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.nombre}}</td>
+                        <td>
+                            {% if detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 1 or detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 4 %}
+                                Deudor
+                            {% elif detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 2 or detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 3 or detalle.idCuenta.idDeMayor.idRubro.idGrupoCuenta.idGrupoCuenta == 5 %}
+                                Acreedor
+                            {% else %}
+                                <!-- Sin valor para idGrupo 6 -->
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No se encontraron subcuentas.</td>
+                </tr>
             {% endfor %}
+            </tbody>
+        </table>
 
-            {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-</div>
+        <!-- Controles de paginación -->
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">Primera</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                        </li>
+                    {% endif %}
 
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active" aria-current="page">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.tipoCuenta %}&tipoCuenta={{ request.GET.tipoCuenta }}{% endif %}{% if request.GET.rubro %}&rubro={{ request.GET.rubro }}{% endif %}{% if request.GET.cuentaMayor %}&cuentaMayor={{ request.GET.cuentaMayor }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
 
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
     </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const tipoCuentaSelect = document.getElementById('tipoCuenta');
+                const rubroSelect = document.getElementById('rubro');
+                const cuentaMayorSelect = document.getElementById('cuentaMayor');
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-{% endblock %}
+                // Cargar Rubros al cargar el documento
+                const tipoCuentaSeleccionado = "{{ request.GET.tipoCuenta }}";
+                if (tipoCuentaSeleccionado) {
+                    fetch(`/get_rubros/${tipoCuentaSeleccionado}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            rubroSelect.innerHTML = '<option value="">Seleccione un Rubro</option>'; // Opción por defecto
+                            data.forEach(rubro => {
+                                rubroSelect.innerHTML += `<option value="${rubro.idRubro}" {% if rubro.idRubro|stringformat:"s" == request.GET.rubro %}selected{% endif %}>${rubro.nombre}</option>`;
+                            });
+                            
+                            // Cargar Cuentas Mayor según el Rubro seleccionado
+                            const rubroSeleccionado = "{{ request.GET.rubro }}";
+                            if (rubroSeleccionado) {
+                                fetch(`/get_cuentas_mayor/${rubroSeleccionado}/`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        cuentaMayorSelect.innerHTML = '<option value="">Seleccione una Cuenta Mayor</option>'; // Opción por defecto
+                                        data.forEach(cuenta => {
+                                            cuentaMayorSelect.innerHTML += `<option value="${cuenta.idDeMayor}" {% if cuenta.idDeMayor|stringformat:"s" == request.GET.cuentaMayor %}selected{% endif %}>${cuenta.nombre}</option>`;
+                                        });
+                                    });
+                            }
+                        });
+                }
+
+                tipoCuentaSelect.addEventListener('change', function() {
+                    const tipoId = this.value;
+                    fetch(`/get_rubros/${tipoId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            rubroSelect.innerHTML = '<option value="">Seleccione un Rubro</option>'; // Opción por defecto
+                            data.forEach(rubro => {
+                                rubroSelect.innerHTML += `<option value="${rubro.idRubro}">${rubro.nombre}</option>`;
+                            });
+                            cuentaMayorSelect.innerHTML = '<option value="">Seleccione una Cuenta Mayor</option>'; // Reset Cuenta Mayor
+                        });
+                });
+
+                rubroSelect.addEventListener('change', function() {
+                    const rubroId = this.value;
+                    fetch(`/get_cuentas_mayor/${rubroId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            cuentaMayorSelect.innerHTML = '<option value="">Seleccione una Cuenta Mayor</option>'; // Opción por defecto
+                            data.forEach(cuenta => {
+                                cuentaMayorSelect.innerHTML += `<option value="${cuenta.idDeMayor}">${cuenta.nombre}</option>`;
+                            });
+                        });
+                });
+            });
+        </script>   
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% endblock %}
 </body>
 </html>
