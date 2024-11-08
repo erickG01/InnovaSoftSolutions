@@ -23,7 +23,7 @@ from itertools import zip_longest
 from django.db.models import Max
 from django.urls import path
 from decimal import Decimal, ROUND_HALF_UP
-
+from django.views.decorators.http import require_POST
 # Create your views here.
 def home(request):
     return render(request,"App_innovaSoft/inicio.html")
@@ -42,6 +42,11 @@ def estadoFinancieros(request):
  #   return render(request,"App_innovaSoft/CatalogoCuentas.html")
 
 #Vistas CatalogoCuentas
+def transaccion(request):
+    return render(request,"App_innovaSoft/transaccion.html")
+
+
+#METODO PARA CONSULTAR LAS CUENTAS
 def transaccion(request):
     return render(request,"App_innovaSoft/transaccion.html")
 
@@ -85,12 +90,6 @@ def tipos_cuentas(request):
     }
 
     return render(request, 'App_innovaSoft/CatalogoCuentas.html', context)
-
-
-
-
-def hojAjustes(request):
-    return render(request,"App_innovaSoft/hojAjustes.html")
 
 #METODO PARA EL LOGIN
 def login(request):
@@ -738,6 +737,11 @@ def obtener_transacciones(request):
     else:
         return JsonResponse({'error': 'No se ha seleccionado una cuenta válida.'})
 
+# Vistas CatalogoCuentas
+def obtener_catalogo_cuentas(request):
+    CatalogoCuentas = SubCuenta.objects.all()
+    cuentas_json = [{"id": cuenta.idSubCuenta, "nombre": cuenta.nombre} for cuenta in CatalogoCuentas]
+    return JsonResponse(cuentas_json, safe=False)
 
 
 #calcular totales
@@ -1096,7 +1100,112 @@ def get_cuentas_mayor(request, rubro_id):
     return JsonResponse(list(cuentas_mayor), safe=False)
 
 
-#METODO PARA CALCULAR LOS COSTOS INDIRECTOS
+#vistas orden de trabajo
+# Vista para obtener departamentos
+
+#vistas orden de trabajo
+# Vista para obtener departamentos
+def obtener_departamentos(request):
+    departamentos = Departamento.objects.all().values('id', 'nombre')
+    return JsonResponse(list(departamentos), safe=False)
+
+# Vista para obtener empleados por departamento
+def obtener_empleados(request, departamento_id):
+    empleados = Empleado.objects.filter(idDepartamento=departamento_id).values('idEmpleado', 'nombre')
+    return JsonResponse(list(empleados), safe=False)
+
+@require_POST
+def guardar_orden_trabajo(request):
+    try:
+        # Obtener datos del formulario
+        departamento_id = request.POST.get('departamento')
+        numero_orden = request.POST.get('numeroOrden')
+        fecha_inicio = request.POST.get('fechaInicio')
+        fecha_fin = request.POST.get('fechaFin')
+        personal_ids = request.POST.getlist('personal[]')  # lista de IDs de empleados seleccionados
+        materia_prima = request.POST.getlist('materia[]')  # lista de materia prima seleccionada
+
+        # Imprimir datos para depuración
+        print(f"Departamento ID: {departamento_id}")
+        print(f"Numero de Orden: {numero_orden}")
+        print(f"Fecha Inicio: {fecha_inicio}")
+        print(f"Fecha Fin: {fecha_fin}")
+        print(f"Personal IDs: {personal_ids}")
+        print(f"Materia Prima: {materia_prima}")
+
+        # Obtener el departamento
+        departamento = get_object_or_404(Departamento, id=departamento_id)
+        print(f"Departamento: {departamento.nombre}")
+
+        # Obtener los empleados seleccionados y calcular el costo de mano de obra
+        empleados = Empleado.objects.filter(idEmpleado__in=personal_ids)
+        personal_nombres = ", ".join([empleado.nombre for empleado in empleados])  # Definir los nombres de los empleados
+        print(f"Empleados seleccionados: {personal_nombres}")
+
+        # Calcular costoManoDeObra sumando el costo real de cada empleado seleccionado
+        costo_mano_de_obra = CostoReal.objects.filter(idEmpleado__in=personal_ids).aggregate(total=Sum('costoReal'))['total'] or 0
+        print(f"Costo de Mano de Obra: {costo_mano_de_obra}")
+
+        # Obtener el costo real de los empleados, es el mismo para todos los empleados del departamento
+        costo_real_empleado = CostoReal.objects.filter(idEmpleado__in=personal_ids).first()
+       # Obtener la instancia de CostoReal a partir del ID
+        id_costo_real = costo_real_empleado  # Esto ahora es una instancia de CostoReal
+        #print(f"ID Costo Real: {id_costo_real}")
+
+        # Inicializamos el costoMateriaPrima
+        costo_materia_prima = 0
+
+        # Verificar si el usuario seleccionó 'energia' o 'internet' y calcular el costoMateriaPrima
+        if 'energia' in materia_prima:
+            # Filtrar transacciones para idCuentaDetalle=20 (energia)
+            transacciones_cuenta_20 = Transacion.objects.filter(idCuentaDetalle__idCuentaDetalle="20")
+           # Para las transacciones de energía
+            print(f"Transacciones Energia: {[t.idCuentaDetalle.nombre for t in transacciones_cuenta_20]}")
+
+
+            # Sumar los valores de "debe" y "haber" para la cuenta de energia (idCuentaDetalle=20)
+            debe_cuenta_20 = transacciones_cuenta_20.aggregate(total_debe=Sum('debe'))['total_debe'] or 0
+            haber_cuenta_20 = transacciones_cuenta_20.aggregate(total_haber=Sum('haber'))['total_haber'] or 0
+            saldo_cuenta_20 = abs(debe_cuenta_20 - haber_cuenta_20)  # Aseguramos que el saldo sea positivo
+            #print(f"Saldo Energia: {saldo_cuenta_20}")
+            costo_materia_prima += saldo_cuenta_20  # Añadimos al costoMateriaPrima
+
+        if 'internet' in materia_prima:
+            # Filtrar transacciones para idCuentaDetalle=21 (internet)
+            transacciones_cuenta_21 = Transacion.objects.filter(idCuentaDetalle__idCuentaDetalle="21")
+
+           # print(f"Transacciones Internet: {transacciones_cuenta_21}")
+
+            # Sumar los valores de "debe" y "haber" para la cuenta de internet (idCuentaDetalle=21)
+            debe_cuenta_21 = transacciones_cuenta_21.aggregate(total_debe=Sum('debe'))['total_debe'] or 0
+            haber_cuenta_21 = transacciones_cuenta_21.aggregate(total_haber=Sum('haber'))['total_haber'] or 0
+            saldo_cuenta_21 = abs(debe_cuenta_21 - haber_cuenta_21)  # Aseguramos que el saldo sea positivo
+            #print(f"Saldo Internet: {saldo_cuenta_21}")
+            costo_materia_prima += saldo_cuenta_21  # Añadimos al costoMateriaPrima
+
+        # Crear y guardar la instancia de OrdenTrabajo
+        orden = OrdenTrabajo(
+            idDepartamento=departamento,
+            numeroOrden=numero_orden,
+            fechaInico=fecha_inicio,  # Corregido: fechaInicio
+            fechaFin=fecha_fin,
+            personal=personal_nombres,
+            materiaPrima=", ".join(materia_prima),  # Unimos las materias seleccionadas por el usuario
+            costoManoDeObra=costo_mano_de_obra,
+            costoMateriaPrima=costo_materia_prima,
+            idCostoReal=id_costo_real  # Agregar el idCostoReal a la orden
+        )
+        orden.save()
+        print(f"Orden de trabajo guardada con ID: {orden.idOrden}")
+
+        return JsonResponse({'status': 'success', 'message': 'Orden de trabajo guardada exitosamente.'})
+
+    except Exception as e:
+        print(f"Error al guardar la orden de trabajo: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Hubo un error al guardar la orden de trabajo.'})
+    
+
+    #METODO PARA CALCULAR LOS COSTOS INDIRECTOS
 def calcular_costos_indirectos(request):
     # Códigos de cuentas a incluir en la tabla
     codigos_cuentas = [
@@ -1141,12 +1250,28 @@ def calcular_costos_indirectos(request):
         'nombre': 'Total',
         'saldo': total_costos
     })
+    # Obtener todos los números de orden de trabajo
+    ordenes = OrdenTrabajo.objects.all()
 
     # Pasar los datos al template
     context = {
-        'costos_indirectos': costos_indirectos
+        'costos_indirectos': costos_indirectos,
+        'ordenes': ordenes,
+        'total_cif': total_costos if total_costos is not None else 0
     }
     return render(request, 'App_innovaSoft/costos.html', context)
 
+#Costos totales
 
+
+def get_orden_data(request, orden_id):
+    try:
+        orden = OrdenTrabajo.objects.get(idOrden=orden_id)
+        data = {
+            'costoManoDeObra': float(orden.costoManoDeObra),
+            'costoMateriaPrima': float(orden.costoMateriaPrima),
+        }
+        return JsonResponse(data)
+    except OrdenTrabajo.DoesNotExist:
+        return JsonResponse({'error': 'Orden no encontrada'}, status=404)
 
