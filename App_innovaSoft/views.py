@@ -1273,3 +1273,4 @@ def get_orden_data(request, orden_id):
         return JsonResponse(data)
     except OrdenTrabajo.DoesNotExist:
         return JsonResponse({'error': 'Orden no encontrada'}, status=404)
+    
