@@ -289,18 +289,24 @@ def generar_balance_de_comprobacion(request):
         saldo = cuenta_info["saldo"]
         naturaleza = cuenta_info["naturaleza"]
 
-        # Clasificar el saldo según la naturaleza de la cuenta
-        if naturaleza in ["ACTIVO", "CUENTAS DE RESULTADO DEUDORAS"]:
-            # Saldo en el debe
+        # Verificar si el código de la cuenta es "5101.02"
+        if codigo == "5101.02":
+            # Forzar el saldo en la columna "Debe"
             datos.append([codigo, cuenta_nombre, f"{saldo:.2f}", "0.00"])
             total_debe += saldo
-        elif naturaleza in ["PASIVO", "PATRIMONIO", "CUENTAS DE RESULTADO ACREEDORAS"]:
-            # Saldo en el haber
-            datos.append([codigo, cuenta_nombre, "0.00", f"{abs(saldo):.2f}"])
-            total_haber += abs(saldo)
         else:
-            # Si la naturaleza es desconocida o no se clasifica, colocar el saldo en ambas columnas
-            datos.append([codigo, cuenta_nombre, f"{saldo:.2f}", f"{abs(saldo):.2f}"])
+            # Clasificar el saldo según la naturaleza de la cuenta
+            if naturaleza in ["ACTIVO", "CUENTAS DE RESULTADO DEUDORAS"]:
+                # Saldo en el debe
+                datos.append([codigo, cuenta_nombre, f"{saldo:.2f}", "0.00"])
+                total_debe += saldo
+            elif naturaleza in ["PASIVO", "PATRIMONIO", "CUENTAS DE RESULTADO ACREEDORAS"]:
+                # Saldo en el haber
+                datos.append([codigo, cuenta_nombre, "0.00", f"{abs(saldo):.2f}"])
+                total_haber += abs(saldo)
+            else:
+                # Si la naturaleza es desconocida o no se clasifica, colocar el saldo en ambas columnas
+                datos.append([codigo, cuenta_nombre, f"{saldo:.2f}", f"{abs(saldo):.2f}"])
 
     # Agregar fila de totales
     datos.append(["", "Total", f"{total_debe:.2f}", f"{total_haber:.2f}"])
